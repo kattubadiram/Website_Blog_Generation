@@ -1,0 +1,48 @@
+name: Post Blog to WordPress
+
+on:
+  schedule:
+  - cron: "30 18 * * *"  # Runs daily at 11:30 AM MST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  post-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openai>=1.0.0 requests python-dotenv gTTS
+
+      - name: Debug - show Python files
+        run: find . -name "*.py"
+
+      - name: Run blog and summary generator
+        run: python final.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL: ${{ secrets.WP_SITE_URL }}
+
+      - name: Generate voiceover (audio only)
+        run: python generate_audio_from_blog.py
+
+      - name: Upload and embed audio in blog post
+        run: python upload_audio_and_embed.py
+        env:
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL: ${{ secrets.WP_SITE_URL }}
