@@ -1,6 +1,7 @@
 import os
 import openai
 import requests
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -68,4 +69,12 @@ if __name__ == "__main__":
     blog_text, summary_text = generate_blog()
     save_summary(summary_text)
     save_blog(blog_text)
-    post_to_wordpress("Today's Business Insights", blog_text)
+
+    # Get current date and time
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M")  # Format: YYYY-MM-DD HH:MM
+
+    # Create the blog title with the timestamp
+    blog_title = f"Today's Business Insights - {timestamp}"
+
+    post_to_wordpress(blog_title, blog_text)
