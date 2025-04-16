@@ -1,6 +1,8 @@
 import os
 import openai
 import requests
+import pytz
+from datetime import datetime
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -70,11 +72,19 @@ if __name__ == "__main__":
     save_summary(summary_text)
     save_blog(blog_text)
 
-    # Get current date and time
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M")  # Format: YYYY-MM-DD HH:MM
+    # Get the current time in UTC
+    utc_now = datetime.now(pytz.utc)
 
-    # Create the blog title with the timestamp
-    blog_title = f"Today's Business Insights - {timestamp}"
+    # Define the EST timezone
+    est_timezone = pytz.timezone('America/New_York')
+
+    # Convert UTC time to EST
+    est_now = utc_now.astimezone(est_timezone)
+
+    # Format the EST time
+    timestamp_est = est_now.strftime("%Y-%m-%d %H:%M %Z%z")  # Include timezone abbreviation
+
+    # Create the blog title with the EST timestamp
+    blog_title = f"Today's Business Insights - {timestamp_est}"
 
     post_to_wordpress(blog_title, blog_text)
