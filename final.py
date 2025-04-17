@@ -51,10 +51,11 @@ def generate_blog():
     return blog, summary, title
 
 def generate_header_image(prompt_text: str) -> str:
-    # Use DALL·E to generate a 1024×512 header image
+    # Use DALL·E to generate a wide header image (1792×1024)
     resp = client.images.generate(
         prompt=f"An engaging, professional financial markets illustration for: {prompt_text}",
-        n=1, size="1024x512"
+        n=1,
+        size="1792x1024"      # ← updated to a supported size
     )
     return resp.data[0].url
 
