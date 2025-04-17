@@ -3,7 +3,6 @@ import openai
 import requests
 import pytz
 from datetime import datetime
-from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -17,6 +16,32 @@ WP_SITE_URL = os.getenv("WP_SITE_URL")
 
 # Initialize OpenAI client (new SDK format)
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+# Function to log blog to history file
+def log_blog_to_history(blog_content):
+    """
+    Log the generated blog to a history file with timestamp
+    """
+    LOG_FILE = "blog_history.txt"
+    
+    # Get current timestamp
+    utc_now = datetime.now(pytz.utc)
+    est_timezone = pytz.timezone('America/New_York')
+    est_now = utc_now.astimezone(est_timezone)
+    timestamp = est_now.strftime("%Y-%m-%d %H:%M:%S %Z")
+    
+    # Format entry with divider and timestamp
+    entry = f"\n\n{'=' * 80}\n"
+    entry += f"BLOG ENTRY - {timestamp}\n"
+    entry += f"{'=' * 80}\n\n"
+    entry += blog_content
+    entry += "\n\n"
+    
+    # Append to history file
+    with open(LOG_FILE, 'a') as f:
+        f.write(entry)
+    
+    print(f"📋 Blog content logged to {LOG_FILE}")
 
 # Step 1: Generate blog + summary
 def generate_blog():
@@ -38,6 +63,10 @@ def generate_blog():
 
     full_text = response.choices[0].message.content
     blog, summary = full_text.split("SUMMARY:", 1)
+    
+    # Log the generated blog to history file
+    log_blog_to_history(blog.strip())
+    
     return blog.strip(), summary.strip()
 
 # Step 2: Post blog to WordPress
@@ -71,20 +100,16 @@ if __name__ == "__main__":
     blog_text, summary_text = generate_blog()
     save_summary(summary_text)
     save_blog(blog_text)
-
+    
     # Get the current time in UTC
     utc_now = datetime.now(pytz.utc)
-
     # Define the EST timezone
     est_timezone = pytz.timezone('America/New_York')
-
     # Convert UTC time to EST
     est_now = utc_now.astimezone(est_timezone)
-
     # Format the EST time
     timestamp_est = est_now.strftime("%Y-%m-%d %H:%M %Z%z")  # Include timezone abbreviation
-
     # Create the blog title with the EST timestamp
     blog_title = f"Today's Business Insights - {timestamp_est}"
-
+    
     post_to_wordpress(blog_title, blog_text)
