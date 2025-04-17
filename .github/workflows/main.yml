@@ -6,12 +6,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # Need write permission to commit log file
 
 jobs:
   post-blog:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -47,3 +46,12 @@ jobs:
           WP_USERNAME: ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL: ${{ secrets.WP_SITE_URL }}
+          
+      - name: Commit blog history log
+        if: success()
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add blog_history.txt
+          git commit -m "Update blog history log [skip ci]" || echo "No changes to commit"
+          git push
