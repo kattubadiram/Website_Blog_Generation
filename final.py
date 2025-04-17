@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import openai
 import requests
 import pytz
@@ -10,9 +11,9 @@ from openai import OpenAIError
 # ——— Load credentials —————————————————————————————
 load_dotenv()
 OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
-WP_USERNAME     = os.getenv("WP_USERNAME")
-WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL     = os.getenv("WP_SITE_URL")
+WP_USERNAME      = os.getenv("WP_USERNAME")
+WP_APP_PASSWORD  = os.getenv("WP_APP_PASSWORD")
+WP_SITE_URL      = os.getenv("WP_SITE_URL")
 
 # ——— Initialize OpenAI —————————————————————————————
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -32,8 +33,8 @@ def log_blog_to_history(blog_content: str):
 
 def generate_blog():
     system = {
-        "role": "system",
-        "content": (
+        "role":"system",
+        "content":(
             "You are a top‑tier financial intelligence writer. "
             "Output strict JSON with three fields:\n"
             "  • \"blog\": a 250‑word market‑moving news post\n"
@@ -104,25 +105,10 @@ def save_local(blog: str, summary: str):
         f.write(blog + "\n\n" + summary)
     print("📝 Saved locally")
 
-def post_to_wordpress(title: str, content: str, featured_media: int):
-    payload = {
-        "title": title,
-        "content": content,
-        "status": "publish",
-        "featured_media": featured_media
-    }
-    resp = requests.post(
-        f"{WP_SITE_URL}/wp-json/wp/v2/posts",
-        auth=(WP_USERNAME, WP_APP_PASSWORD),
-        json=payload
-    )
-    resp.raise_for_status()
-    print("📤 Published post (status", resp.status_code, ")")
-
 # ——— Main Execution ——————————————————————————————
 
 if __name__ == "__main__":
-    # 1) Generate the blog, summary, and base title
+    # 1) Generate the blog, ignore summary, and get base title
     blog_text, summary_text, base_title = generate_blog()
 
     # 2) Create & upload header image
@@ -133,7 +119,7 @@ if __name__ == "__main__":
     media_src  = media_obj["source_url"]
 
     # 3) (Optional) TTS step → obtain audio_url
-    # Replace with your own TTS/upload logic:
+    # Replace this stub with your own TTS/upload logic:
     # audio_url = upload_and_get_audio_url(blog_text)
     audio_url = "https://your-cdn.com/path/to/generated-audio.mp3"
 
@@ -145,7 +131,7 @@ if __name__ == "__main__":
     ts_readable = est_now.strftime("%B %d, %Y %H:%M")
     final_title = f"{ts_readable} EST  |  {base_title}"
 
-    # 6) Compose header block: image left; date/title & audio right
+    # 6) Compose header block: image left; date & title right (no stub audio)
     header_html = (
         '<div style="display:flex; align-items:flex-start; margin-bottom:20px;">'
         f'<div style="flex:0 0 200px; margin-right:20px;">'
@@ -154,16 +140,48 @@ if __name__ == "__main__":
         '<div style="flex:1; display:flex; flex-direction:column;">'
         f'<div style="color:#666; font-size:12px; margin-bottom:8px;">{ts_readable} EST</div>'
         f'<h1 style="margin:0 0 12px 0; font-size:24px;">{base_title}</h1>'
-        '<div style="font-size:14px; color:#444; margin-bottom:8px;">'
-        'If you’d rather listen, hit play below:'
-        '</div>'
-        f'<audio controls src="{audio_url}" style="width:100%; max-width:400px;"></audio>'
         '</div>'
         '</div>'
     )
 
-    # 7) Build the rest of the post body (only the blog text)
-    post_body = header_html + f'\n<div>{blog_text}</div>'
+    # 7) Initial publish: header + blog body (no audio)
+    publish_resp = requests.post(
+        f"{WP_SITE_URL}/wp-json/wp/v2/posts",
+        auth=(WP_USERNAME, WP_APP_PASSWORD),
+        json={
+            "title": final_title,
+            "content": header_html + f"\n<div>{blog_text}</div>",
+            "status": "publish",
+            "featured_media": media_id
+        }
+    )
+    publish_resp.raise_for_status()
+    post = publish_resp.json()
+    post_id = post["id"]
+    print(f"📤 Published post ID {post_id}")
 
-    # 8) Publish with featured image
-    post_to_wordpress(final_title, post_body, featured_media=media_id)
+    # 8) Fetch rendered content (with bottom audio from your TTS/upload plugin)
+    rendered = requests.get(
+        f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}?_fields=content",
+        auth=(WP_USERNAME, WP_APP_PASSWORD)
+    ).json()["content"]["rendered"]
+
+    # 9) Extract the bottom <audio> block
+    audio_match = re.findall(r'(<audio[\s\S]*?</audio>)', rendered)
+    if audio_match:
+        bottom_audio = audio_match[-1]
+        # Remove all audio blocks
+        cleaned = re.sub(r'<audio[\s\S]*?</audio>', '', rendered)
+        # Prepend the real audio to the top
+        updated_content = bottom_audio + cleaned
+
+        # 10) Update the post with the moved audio
+        update_resp = requests.post(
+            f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}",
+            auth=(WP_USERNAME, WP_APP_PASSWORD),
+            json={"content": updated_content}
+        )
+        update_resp.raise_for_status()
+        print("🔄 Moved bottom audio to top and removed duplicate.")
+    else:
+        print("⚠️ No audio block found to move.")
