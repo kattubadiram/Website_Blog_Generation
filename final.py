@@ -93,6 +93,7 @@ def save_summary(summary_text):
 def save_blog(blog_text):
     with open("blog_post.txt", "w") as f:
         f.write(blog_text)
+        f.write(summary_text)
     print("📝 Blog saved to blog_post.txt")
 
 # Main Execution
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     # Convert UTC time to EST
     est_now = utc_now.astimezone(est_timezone)
     # Format the EST time
-    timestamp_est = est_now.strftime("%Y-%m-%d %H:%M %Z%z")  # Include timezone abbreviation
+    timestamp_est = est_now.strftime("%H:%M")  # Include timezone abbreviation
     # Create the blog title with the EST timestamp
     blog_title = f"Today's Business Insights - {timestamp_est}"
     
