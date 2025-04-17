@@ -5,6 +5,7 @@ import requests
 import pytz
 from datetime import datetime
 from dotenv import load_dotenv
+from openai import OpenAIError
 
 # Load environment vars
 load_dotenv()
@@ -50,32 +51,26 @@ def generate_blog():
     log_blog_to_history(blog)
     return blog, summary, title
 
-import openai
-from openai import OpenAIError
-
 def generate_header_image(prompt_text: str) -> str:
-    # Build a concise DALL·E prompt
-    dalle_prompt = f"Professional, high‑resolution financial markets header illustration for: {prompt_text}"
-    
-    # Debug-print what we’re sending
+    """
+    Try DALL·E at 1024×1024; if it fails, fall back to Unsplash.
+    """
+    dalle_prompt = f"Professional, high‑resolution financial markets illustration for: {prompt_text}"
     print(f"[DEBUG] DALL·E prompt: {dalle_prompt!r}")
-    
+
     try:
         resp = client.images.generate(
-            model="dall-e-2",    # ← explicitly specify the model
             prompt=dalle_prompt,
             n=1,
-            size="1792x1024"     # ← a supported wide size
+            size="1024x1024"     # supported square size
         )
+        return resp.data[0].url
     except OpenAIError as e:
-        print("❌ DALL·E generation failed:", e)
-        raise
-    
-    # Return the first image URL
-    return resp.data[0].url
+        print("❌ DALL·E failed, using Unsplash fallback:", e)
+        # random finance image from Unsplash (no API key needed)
+        return "https://source.unsplash.com/1024x1024/?finance,stock-market"
 
 def upload_image_to_wordpress(image_url: str) -> dict:
-    # Download image bytes
     img_data = requests.get(image_url).content
     filename = "header_image.png"
     media = requests.post(
@@ -85,7 +80,7 @@ def upload_image_to_wordpress(image_url: str) -> dict:
         files={"file": (filename, img_data, "image/png")}
     )
     media.raise_for_status()
-    return media.json()  # contains "id" and "source_url"
+    return media.json()
 
 def save_local(blog: str, summary: str):
     with open("blog_summary.txt","w") as f: f.write(summary)
@@ -108,7 +103,7 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
     print(f"📤 Published (status {resp.status_code})")
 
 if __name__ == "__main__":
-    # 1) Generate
+    # 1) Generate blog + summary + title
     blog_text, summary_text, base_title = generate_blog()
 
     # 2) Generate & upload header image
@@ -120,21 +115,21 @@ if __name__ == "__main__":
     # 3) Save locally
     save_local(blog_text, summary_text)
 
-    # 4) Build timestamp + layout
+    # 4) Build timestamp + flex header
     est_now     = datetime.now(pytz.utc)\
                    .astimezone(pytz.timezone('America/New_York'))
     ts_readable = est_now.strftime("%B %d, %Y %H:%M")
-    # Flex header: date left, title right
     header_html = (
-        f'<div style="display:flex; justify-content:space-between; '
-        f'align-items:center; margin-bottom:20px;">'
+        '<div style="display:flex; justify-content:space-between; '
+        'align-items:center; margin-bottom:20px;">'
         f'<span style="color:#666; font-size:12px;">{ts_readable} EST</span>'
-        f'<h1 style="margin:0;">{base_title}</h1>'
-        f'</div>'
+        # vertical separator + some padding
+        '<div style="width:1px; background:#ccc; height:24px;"></div>'
+        f'<h1 style="margin:0; padding-left:10px;">{base_title}</h1>'
+        '</div>'
     )
 
-    # 5) Embed image and inline image
-    #    – one at very top, one after first paragraph
+    # 5) Embed the featured image + inline after first paragraph
     paragraphs = blog_text.split("\n\n", 1)
     first_para = paragraphs[0]
     rest       = paragraphs[1] if len(paragraphs)>1 else ""
@@ -144,7 +139,7 @@ if __name__ == "__main__":
     )
     blog_with_inline = first_para + inline_img + rest
 
-    # 6) Compose post HTML
+    # 6) Compose full post HTML
     post_body = (
         f'<img src="{media_src}" '
         'style="max-width:100%; display:block; margin-bottom:20px;" />\n'
@@ -153,5 +148,5 @@ if __name__ == "__main__":
         + blog_with_inline
     )
 
-    # 7) Publish
-    post_to_wordpress(f"{base_title}", post_body, featured_media=media_id)
+    # 7) Publish with featured image
+    post_to_wordpress(base_title, post_body, featured_media=media_id)
