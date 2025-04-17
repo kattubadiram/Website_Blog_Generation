@@ -109,8 +109,14 @@ if __name__ == "__main__":
     # Convert UTC time to EST
     est_now = utc_now.astimezone(est_timezone)
     # Format the EST time
-    timestamp_est = est_now.strftime("%H:%M")  # Include timezone abbreviation
+    # Get current time in EST
+    timestamp_est = est_now.strftime("%B %d, %Y %H:%M")  # Format: Month Day, Year HH:MM
+
     # Create the blog title with the EST timestamp
-    blog_title = f"Today's Business Insights - {timestamp_est}"
+    blog_title = "Today's Business Insights"
+    blog_date = f"<span style='font-size: 12px; color: #666;'>{timestamp_est} EST</span>"
     
-    post_to_wordpress(blog_title, blog_text)
+    # Combine the title and formatted date for WordPress
+    formatted_content = f"{blog_title}\n{blog_date}\n\n{blog_text}"
+
+    post_to_wordpress(blog_title, formatted_content)
