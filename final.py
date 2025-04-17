@@ -1,6 +1,5 @@
 import os
 import json
-import re
 import openai
 import requests
 import pytz
@@ -11,9 +10,9 @@ from openai import OpenAIError
 # ——— Load credentials —————————————————————————————
 load_dotenv()
 OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
-WP_USERNAME      = os.getenv("WP_USERNAME")
-WP_APP_PASSWORD  = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL      = os.getenv("WP_SITE_URL")
+WP_USERNAME     = os.getenv("WP_USERNAME")
+WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
+WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 # ——— Initialize OpenAI —————————————————————————————
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -30,6 +29,7 @@ def log_blog_to_history(blog_content: str):
     with open(LOG_FILE, "a") as f:
         f.write(entry)
     print("📋 Logged to", LOG_FILE)
+
 
 def generate_blog():
     system = {
@@ -54,7 +54,12 @@ def generate_blog():
     log_blog_to_history(blog)
     return blog, summary, title
 
+
 def create_image_prompt(summary: str) -> str:
+    """
+    Ask GPT‑4o to craft a vivid, poster‑style DALL·E prompt
+    based solely on the 100‑word SUMMARY of your post.
+    """
     system = {
         "role":"system",
         "content":(
@@ -64,16 +69,21 @@ def create_image_prompt(summary: str) -> str:
             "Do NOT include any text overlays in the image."
         )
     }
+    user = {"role":"user","content": summary}
     resp = client.chat.completions.create(
         model="gpt-4o",
-        messages=[system, {"role":"user","content": summary}],
+        messages=[system, user],
         temperature=0.8
     )
     prompt_text = resp.choices[0].message.content.strip().strip('"')
     print("[DEBUG] Generated DALL·E prompt:", prompt_text)
     return prompt_text
 
+
 def generate_header_image(image_prompt: str) -> str:
+    """
+    Call DALL·E-2 to render the poster. Fall back to Unsplash if it errors.
+    """
     try:
         resp = client.images.generate(
             model="dall-e-2",
@@ -86,6 +96,7 @@ def generate_header_image(image_prompt: str) -> str:
         print("❌ DALL·E failed, falling back to Unsplash:", e)
         return "https://source.unsplash.com/1024x1024/?finance,stock-market"
 
+
 def upload_image_to_wordpress(image_url: str) -> dict:
     img_data = requests.get(image_url).content
     filename = "header_image.png"
@@ -96,92 +107,70 @@ def upload_image_to_wordpress(image_url: str) -> dict:
         files={"file": (filename, img_data, "image/png")}
     )
     media.raise_for_status()
-    return media.json()
+    return media.json()  # -> {"id": ..., "source_url": ...}
+
 
 def save_local(blog: str, summary: str):
-    with open("blog_summary.txt","w") as f:
-        f.write(summary)
+    with open("blog_summary.txt","w") as f: f.write(summary)
     with open("blog_post.txt","w") as f:
         f.write(blog + "\n\n" + summary)
     print("📝 Saved locally")
 
+
+def post_to_wordpress(title: str, content: str, featured_media: int):
+    payload = {
+        "title": title,
+        "content": content,
+        "status": "publish",
+        "featured_media": featured_media
+    }
+    resp = requests.post(
+        f"{WP_SITE_URL}/wp-json/wp/v2/posts",
+        auth=(WP_USERNAME, WP_APP_PASSWORD),
+        json=payload
+    )
+    resp.raise_for_status()
+    print("📤 Published post (status", resp.status_code, ")")
+
+
 # ——— Main Execution ——————————————————————————————
 
 if __name__ == "__main__":
-    # 1) Generate the blog, ignore summary, and get base title
+    # 1) Create blog
     blog_text, summary_text, base_title = generate_blog()
 
-    # 2) Create & upload header image
+    # 2) Prompt → generate image → upload
     img_prompt = create_image_prompt(summary_text)
     img_url    = generate_header_image(img_prompt)
     media_obj  = upload_image_to_wordpress(img_url)
     media_id   = media_obj["id"]
     media_src  = media_obj["source_url"]
 
-    # 3) (Optional) TTS step → obtain audio_url
-    # Replace this stub with your own TTS/upload logic:
-    # audio_url = upload_and_get_audio_url(blog_text)
-    audio_url = "https://your-cdn.com/path/to/generated-audio.mp3"
-
-    # 4) Save drafts locally
+    # 3) Save drafts locally
     save_local(blog_text, summary_text)
 
-    # 5) Build timestamped title string
-    est_now     = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-    ts_readable = est_now.strftime("%B %d, %Y %H:%M")
-    final_title = f"{ts_readable} EST  |  {base_title}"
+    # 4) Timestamp & title string
+    est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
+    ts_readable  = est_now.strftime("%B %d, %Y %H:%M")
+    final_title  = f"{ts_readable} EST  |  {base_title}"
 
-    # 6) Compose header block: image left; date & title right (no stub audio)
+    # 5) Build header block: image left, date & title right
     header_html = (
-        '<div style="display:flex; align-items:flex-start; margin-bottom:20px;">'
-        f'<div style="flex:0 0 200px; margin-right:20px;">'
-        f'<img src="{media_src}" style="width:100%; height:auto;" />'
-        '</div>'
-        '<div style="flex:1; display:flex; flex-direction:column;">'
+        '<div style="display:flex; align-items:center; margin-bottom:20px;">'
+        f'<div style="flex:1;"><img src="{media_src}" style="width:100%; height:auto;" /></div>'
+        '<div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:20px;">'
         f'<div style="color:#666; font-size:12px; margin-bottom:8px;">{ts_readable} EST</div>'
-        f'<h1 style="margin:0 0 12px 0; font-size:24px;">{base_title}</h1>'
+        f'<h1 style="margin:0; font-size:24px;">{base_title}</h1>'
         '</div>'
         '</div>'
     )
 
-    # 7) Initial publish: header + blog body (no audio)
-    publish_resp = requests.post(
-        f"{WP_SITE_URL}/wp-json/wp/v2/posts",
-        auth=(WP_USERNAME, WP_APP_PASSWORD),
-        json={
-            "title": final_title,
-            "content": header_html + f"\n<div>{blog_text}</div>",
-            "status": "publish",
-            "featured_media": media_id
-        }
+    # 6) Assemble post body
+    post_body = (
+        header_html +
+        f'<p><em>{summary_text}</em></p>\n\n'
+        + f'<div>{blog_text}</div>'
     )
-    publish_resp.raise_for_status()
-    post = publish_resp.json()
-    post_id = post["id"]
-    print(f"📤 Published post ID {post_id}")
 
-    # 8) Fetch rendered content (with bottom audio from your TTS/upload plugin)
-    rendered = requests.get(
-        f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}?_fields=content",
-        auth=(WP_USERNAME, WP_APP_PASSWORD)
-    ).json()["content"]["rendered"]
-
-    # 9) Extract the bottom <audio> block
-    audio_match = re.findall(r'(<audio[\s\S]*?</audio>)', rendered)
-    if audio_match:
-        bottom_audio = audio_match[-1]
-        # Remove all audio blocks
-        cleaned = re.sub(r'<audio[\s\S]*?</audio>', '', rendered)
-        # Prepend the real audio to the top
-        updated_content = bottom_audio + cleaned
-
-        # 10) Update the post with the moved audio
-        update_resp = requests.post(
-            f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}",
-            auth=(WP_USERNAME, WP_APP_PASSWORD),
-            json={"content": updated_content}
-        )
-        update_resp.raise_for_status()
-        print("🔄 Moved bottom audio to top and removed duplicate.")
-    else:
-        print("⚠️ No audio block found to move.")
+    # 7) Publish!
+    post_to_wordpress(final_title, post_body, featured_media=media_id)
