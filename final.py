@@ -6,103 +6,136 @@ import pytz
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment vars
 load_dotenv()
-
-# Credentials
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WP_USERNAME     = os.getenv("WP_USERNAME")
 WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
 WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
-# Initialize OpenAI client
+# Init clients
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def log_blog_to_history(blog_content: str):
-    """
-    Append the raw blog content to blog_history.txt with timestamp.
-    """
     LOG_FILE = "blog_history.txt"
-    est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-    ts = est_now.strftime("%Y-%m-%d %H:%M:%S %Z")
-    divider = "=" * 80
+    ts = datetime.now(pytz.utc)\
+         .astimezone(pytz.timezone('America/New_York'))\
+         .strftime("%Y-%m-%d %H:%M:%S %Z")
+    divider = "="*80
     entry = f"\n\n{divider}\nBLOG ENTRY - {ts}\n{divider}\n\n{blog_content}\n"
     with open(LOG_FILE, 'a') as f:
         f.write(entry)
-    print(f"📋 Blog content logged to {LOG_FILE}")
+    print(f"📋 Logged to {LOG_FILE}")
 
 def generate_blog():
-    """
-    Ask the model to emit a JSON object with keys:
-      - blog   : 250‑word market‑moving news post
-      - summary: 100‑word SUMMARY:...
-      - title  : click‑worthy title (no timestamp)
-    """
     system_msg = {
         "role": "system",
         "content": (
             "You are a top‑tier financial intelligence writer. "
-            "Respond in strict JSON with three fields: "
-            "1) \"blog\": a 250‑word post on the latest, trending news that could move markets, "
-            "including emerging themes, macro factors, and risk management insights; "
-            "2) \"summary\": a 100‑word brief preﬁxed with 'SUMMARY:'; "
-            "3) \"title\": an engaging, click‑worthy headline (without timestamp)."
+            "Output strict JSON with 3 fields:\n"
+            "  • \"blog\": a 250‑word market‑moving news post\n"
+            "  • \"summary\": a 100‑word brief prefixed with 'SUMMARY:'\n"
+            "  • \"title\": a click‑worthy headline (no timestamp)\n"
         )
     }
-    user_msg = {
-        "role": "user",
-        "content": ""
-    }
-
-    response = client.chat.completions.create(
+    resp = client.chat.completions.create(
         model="gpt-4o",
-        messages=[system_msg, user_msg],
+        messages=[system_msg, {"role":"user","content":""}],
         temperature=0.7
     )
-
-    # Parse JSON output
-    data = json.loads(response.choices[0].message.content)
+    data    = json.loads(resp.choices[0].message.content)
     blog    = data["blog"].strip()
     summary = data["summary"].strip()
     title   = data["title"].strip()
-    
-    # Log for history
     log_blog_to_history(blog)
     return blog, summary, title
 
-def save_summary(summary: str):
-    with open("blog_summary.txt", "w") as f:
-        f.write(summary)
-    print("📝 Summary saved to blog_summary.txt")
+def generate_header_image(prompt_text: str) -> str:
+    # Use DALL·E to generate a 1024×512 header image
+    resp = client.images.generate(
+        prompt=f"An engaging, professional financial markets illustration for: {prompt_text}",
+        n=1, size="1024x512"
+    )
+    return resp.data[0].url
 
-def save_blog(blog: str, summary: str):
-    with open("blog_post.txt", "w") as f:
-        f.write(blog + "\n\n" + summary)
-    print("📝 Blog + summary saved to blog_post.txt")
+def upload_image_to_wordpress(image_url: str) -> dict:
+    # Download image bytes
+    img_data = requests.get(image_url).content
+    filename = "header_image.png"
+    media = requests.post(
+        f"{WP_SITE_URL}/wp-json/wp/v2/media",
+        auth=(WP_USERNAME, WP_APP_PASSWORD),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        files={"file": (filename, img_data, "image/png")}
+    )
+    media.raise_for_status()
+    return media.json()  # contains "id" and "source_url"
 
-def post_to_wordpress(title: str, content: str):
-    url     = f"{WP_SITE_URL}/wp-json/wp/v2/posts"
-    headers = {"Content-Type": "application/json"}
-    payload = {"title": title, "content": content, "status": "publish"}
-    resp = requests.post(url, headers=headers, json=payload, auth=(WP_USERNAME, WP_APP_PASSWORD))
+def save_local(blog: str, summary: str):
+    with open("blog_summary.txt","w") as f: f.write(summary)
+    with open("blog_post.txt","w") as f: f.write(blog+"\n\n"+summary)
+    print("📝 Saved blog and summary locally")
+
+def post_to_wordpress(title: str, content: str, featured_media: int):
+    payload = {
+        "title": title,
+        "content": content,
+        "status": "publish",
+        "featured_media": featured_media
+    }
+    resp = requests.post(
+        f"{WP_SITE_URL}/wp-json/wp/v2/posts",
+        auth=(WP_USERNAME, WP_APP_PASSWORD),
+        json=payload
+    )
     resp.raise_for_status()
-    print(f"📤 Published post: {resp.status_code}")
+    print(f"📤 Published (status {resp.status_code})")
 
 if __name__ == "__main__":
-    # Generate content
+    # 1) Generate
     blog_text, summary_text, base_title = generate_blog()
-    
-    # Save locally
-    save_summary(summary_text)
-    save_blog(blog_text, summary_text)
-    
-    # Build timestamped title
-    est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-    ts_readable  = est_now.strftime("%B %d, %Y %H:%M")
-    final_title  = f"{base_title} — {ts_readable} EST"
-    
-    # Prepare post body (you can include the summary in the post if you like)
-    post_body = f"<p><em>{ts_readable} EST</em></p>\n\n{blog_text}"
-    
-    # Publish
-    post_to_wordpress(final_title, post_body)
+
+    # 2) Generate & upload header image
+    image_url = generate_header_image(base_title)
+    media_obj = upload_image_to_wordpress(image_url)
+    media_id  = media_obj["id"]
+    media_src = media_obj["source_url"]
+
+    # 3) Save locally
+    save_local(blog_text, summary_text)
+
+    # 4) Build timestamp + layout
+    est_now     = datetime.now(pytz.utc)\
+                   .astimezone(pytz.timezone('America/New_York'))
+    ts_readable = est_now.strftime("%B %d, %Y %H:%M")
+    # Flex header: date left, title right
+    header_html = (
+        f'<div style="display:flex; justify-content:space-between; '
+        f'align-items:center; margin-bottom:20px;">'
+        f'<span style="color:#666; font-size:12px;">{ts_readable} EST</span>'
+        f'<h1 style="margin:0;">{base_title}</h1>'
+        f'</div>'
+    )
+
+    # 5) Embed image and inline image
+    #    – one at very top, one after first paragraph
+    paragraphs = blog_text.split("\n\n", 1)
+    first_para = paragraphs[0]
+    rest       = paragraphs[1] if len(paragraphs)>1 else ""
+    inline_img = (
+        f'\n\n<img src="{media_src}" '
+        'style="max-width:100%; display:block; margin:20px 0;" />\n\n'
+    )
+    blog_with_inline = first_para + inline_img + rest
+
+    # 6) Compose post HTML
+    post_body = (
+        f'<img src="{media_src}" '
+        'style="max-width:100%; display:block; margin-bottom:20px;" />\n'
+        + header_html +
+        f'<p><em>{summary_text}</em></p>\n\n'
+        + blog_with_inline
+    )
+
+    # 7) Publish
+    post_to_wordpress(f"{base_title}", post_body, featured_media=media_id)
