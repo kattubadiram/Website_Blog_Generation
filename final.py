@@ -50,13 +50,28 @@ def generate_blog():
     log_blog_to_history(blog)
     return blog, summary, title
 
+import openai
+from openai import OpenAIError
+
 def generate_header_image(prompt_text: str) -> str:
-    # Use DALL·E to generate a wide header image (1792×1024)
-    resp = client.images.generate(
-        prompt=f"An engaging, professional financial markets illustration for: {prompt_text}",
-        n=1,
-        size="1792x1024"      # ← changed from "1024x512"
-    )
+    # Build a concise DALL·E prompt
+    dalle_prompt = f"Professional, high‑resolution financial markets header illustration for: {prompt_text}"
+    
+    # Debug-print what we’re sending
+    print(f"[DEBUG] DALL·E prompt: {dalle_prompt!r}")
+    
+    try:
+        resp = client.images.generate(
+            model="dall-e-2",    # ← explicitly specify the model
+            prompt=dalle_prompt,
+            n=1,
+            size="1792x1024"     # ← a supported wide size
+        )
+    except OpenAIError as e:
+        print("❌ DALL·E generation failed:", e)
+        raise
+    
+    # Return the first image URL
     return resp.data[0].url
 
 def upload_image_to_wordpress(image_url: str) -> dict:
