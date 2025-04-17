@@ -64,24 +64,32 @@ def generate_blog():
 def extract_keywords(text: str) -> list[str]:
     """
     Use the LLM to extract the top three keywords/phrases
-    from the blog text, returned as JSON: {"keywords": [...]}
+    from the blog text. Returns a list of up to 3 strings.
+    Falls back to a default if parsing fails.
     """
     prompt = (
         "Extract the top three most important keywords or phrases "
         "from the following finance article. "
-        "Respond in JSON as {\"keywords\": [\"kw1\",\"kw2\",\"kw3\"]}.\n\n"
+        "Respond in JSON as {\"keywords\": [\"kw1\",\"kw2\",\"kw3\"]} and NOTHING else.\n\n"
         + text
     )
     resp = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are a keyword extractor."},
+            {"role": "system", "content": "You are a keyword extractor. Output ONLY JSON."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.0
     )
-    data = json.loads(resp.choices[0].message.content)
-    return data.get("keywords", [])[:3]
+    raw = resp.choices[0].message.content.strip()
+    try:
+        data = json.loads(raw)
+        return data.get("keywords", [])[:3]
+    except json.JSONDecodeError:
+        # log the malformed output for debugging, and fall back
+        print("⚠️ Keyword extraction returned invalid JSON:")
+        print(raw)
+        return ["finance", "markets", "investment"]
 
 
 def generate_header_image(keywords: list[str]) -> str:
@@ -89,8 +97,6 @@ def generate_header_image(keywords: list[str]) -> str:
     Build a poster‑style prompt around the top keywords,
     generate via DALL·E-2 (1024×1024), or fall back to Unsplash.
     """
-    if not keywords:
-        keywords = ["finance", "markets", "investment"]
     dalle_prompt = (
         "A poster‑style, high‑impact cover illustration for a finance article, "
         "featuring " + ", ".join(keywords) +
@@ -167,10 +173,9 @@ if __name__ == "__main__":
     # 4) Build the EST timestamp and combined title
     est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
     ts_readable = est_now.strftime("%B %d, %Y %H:%M")
-    # Prefix timestamp, separator, then actual headline
     final_title = f"{ts_readable} EST  |  {base_title}"
 
-    # 5) Create the in‑post header (optional, for within the HTML body)
+    # 5) Create the in‑post header (optional)
     header_html = (
         '<div style="display:flex; justify-content:space-between; '
         'align-items:center; margin-bottom:20px;">'
