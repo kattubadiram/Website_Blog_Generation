@@ -30,11 +30,10 @@ def log_blog_to_history(blog_content: str):
         f.write(entry)
     print("📋 Logged to", LOG_FILE)
 
-
 def generate_blog():
     system = {
-        "role":"system",
-        "content":(
+        "role": "system",
+        "content": (
             "You are a top‑tier financial intelligence writer. "
             "Output strict JSON with three fields:\n"
             "  • \"blog\": a 250‑word market‑moving news post\n"
@@ -54,12 +53,7 @@ def generate_blog():
     log_blog_to_history(blog)
     return blog, summary, title
 
-
 def create_image_prompt(summary: str) -> str:
-    """
-    Ask GPT‑4o to craft a vivid, poster‑style DALL·E prompt
-    based solely on the 100‑word SUMMARY of your post.
-    """
     system = {
         "role":"system",
         "content":(
@@ -69,21 +63,16 @@ def create_image_prompt(summary: str) -> str:
             "Do NOT include any text overlays in the image."
         )
     }
-    user = {"role":"user","content": summary}
     resp = client.chat.completions.create(
         model="gpt-4o",
-        messages=[system, user],
+        messages=[system, {"role":"user","content": summary}],
         temperature=0.8
     )
     prompt_text = resp.choices[0].message.content.strip().strip('"')
     print("[DEBUG] Generated DALL·E prompt:", prompt_text)
     return prompt_text
 
-
 def generate_header_image(image_prompt: str) -> str:
-    """
-    Call DALL·E-2 to render the poster. Fall back to Unsplash if it errors.
-    """
     try:
         resp = client.images.generate(
             model="dall-e-2",
@@ -96,7 +85,6 @@ def generate_header_image(image_prompt: str) -> str:
         print("❌ DALL·E failed, falling back to Unsplash:", e)
         return "https://source.unsplash.com/1024x1024/?finance,stock-market"
 
-
 def upload_image_to_wordpress(image_url: str) -> dict:
     img_data = requests.get(image_url).content
     filename = "header_image.png"
@@ -107,15 +95,14 @@ def upload_image_to_wordpress(image_url: str) -> dict:
         files={"file": (filename, img_data, "image/png")}
     )
     media.raise_for_status()
-    return media.json()  # -> {"id": ..., "source_url": ...}
-
+    return media.json()
 
 def save_local(blog: str, summary: str):
-    with open("blog_summary.txt","w") as f: f.write(summary)
+    with open("blog_summary.txt","w") as f:
+        f.write(summary)
     with open("blog_post.txt","w") as f:
         f.write(blog + "\n\n" + summary)
     print("📝 Saved locally")
-
 
 def post_to_wordpress(title: str, content: str, featured_media: int):
     payload = {
@@ -132,45 +119,51 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
     resp.raise_for_status()
     print("📤 Published post (status", resp.status_code, ")")
 
-
 # ——— Main Execution ——————————————————————————————
 
 if __name__ == "__main__":
-    # 1) Create blog
+    # 1) Generate the blog, summary, and base title
     blog_text, summary_text, base_title = generate_blog()
 
-    # 2) Prompt → generate image → upload
+    # 2) Create & upload header image
     img_prompt = create_image_prompt(summary_text)
     img_url    = generate_header_image(img_prompt)
     media_obj  = upload_image_to_wordpress(img_url)
     media_id   = media_obj["id"]
     media_src  = media_obj["source_url"]
 
-    # 3) Save drafts locally
+    # 3) (Optional) TTS step → obtain audio_url
+    # Replace with your own TTS/upload logic:
+    # audio_url = upload_and_get_audio_url(blog_text)
+    audio_url = "https://your-cdn.com/path/to/generated-audio.mp3"
+
+    # 4) Save drafts locally
     save_local(blog_text, summary_text)
 
-    # 4) Timestamp & title string
-    est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-    ts_readable  = est_now.strftime("%B %d, %Y %H:%M")
-    final_title  = f"{ts_readable} EST  |  {base_title}"
+    # 5) Build timestamped title string
+    est_now     = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
+    ts_readable = est_now.strftime("%B %d, %Y %H:%M")
+    final_title = f"{ts_readable} EST  |  {base_title}"
 
-    # 5) Build header block: image left, date & title right
+    # 6) Compose header block: image left; date/title & audio right
     header_html = (
-        '<div style="display:flex; align-items:center; margin-bottom:20px;">'
-        f'<div style="flex:1;"><img src="{media_src}" style="width:100%; height:auto;" /></div>'
-        '<div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:20px;">'
+        '<div style="display:flex; align-items:flex-start; margin-bottom:20px;">'
+        f'<div style="flex:0 0 200px; margin-right:20px;">'
+        f'<img src="{media_src}" style="width:100%; height:auto;" />'
+        '</div>'
+        '<div style="flex:1; display:flex; flex-direction:column;">'
         f'<div style="color:#666; font-size:12px; margin-bottom:8px;">{ts_readable} EST</div>'
-        f'<h1 style="margin:0; font-size:24px;">{base_title}</h1>'
+        f'<h1 style="margin:0 0 12px 0; font-size:24px;">{base_title}</h1>'
+        '<div style="font-size:14px; color:#444; margin-bottom:8px;">'
+        'If you’d rather listen, hit play below:'
+        '</div>'
+        f'<audio controls src="{audio_url}" style="width:100%; max-width:400px;"></audio>'
         '</div>'
         '</div>'
     )
 
-    # 6) Assemble post body
-    post_body = (
-        header_html +
-        f'<p><em>{summary_text}</em></p>\n\n'
-        + f'<div>{blog_text}</div>'
-    )
+    # 7) Build the rest of the post body (only the blog text)
+    post_body = header_html + f'\n<div>{blog_text}</div>'
 
-    # 7) Publish!
+    # 8) Publish with featured image
     post_to_wordpress(final_title, post_body, featured_media=media_id)
