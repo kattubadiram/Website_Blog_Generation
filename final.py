@@ -55,7 +55,7 @@ def generate_header_image(prompt_text: str) -> str:
     resp = client.images.generate(
         prompt=f"An engaging, professional financial markets illustration for: {prompt_text}",
         n=1,
-        size="1792x1024"      # ← updated to a supported size
+        size="1792x1024"      # ← changed from "1024x512"
     )
     return resp.data[0].url
 
