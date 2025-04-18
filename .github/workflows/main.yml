@@ -2,18 +2,21 @@ name: Post Blog to WordPress
 
 on:
   schedule:
-  - cron: "17 18 * * *"  # Runs daily at 2:15 PM EST (7:15 PM UTC)
+    - cron: "17 18 * * *"  # Runs daily at 2:15 PM EST (7:15 PM UTC)
   workflow_dispatch:
 
 permissions:
-  contents: write  # Need write permission to commit log file
+  contents: write  # Required to push history logs
 
 jobs:
   post-blog:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true  # so we can push back
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -22,20 +25,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytz
           python -m pip install --upgrade pip
-          pip install openai>=1.0.0 requests python-dotenv gTTS
+          pip install pytz requests python-dotenv openai>=1.0.0 gTTS
 
-      - name: Debug - show Python files
+      - name: Debug — list Python files
         run: find . -name "*.py"
 
       - name: Run blog and summary generator
         run: python final.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL: ${{ secrets.WP_SITE_URL }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
       - name: Generate voiceover (audio only)
         run: python generate_audio_from_blog.py
@@ -43,15 +45,20 @@ jobs:
       - name: Upload and embed audio in blog post
         run: python upload_audio_and_embed.py
         env:
-          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL: ${{ secrets.WP_SITE_URL }}
-          
-      - name: Commit blog history log
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Generate 20‑second video prompt
+        run: python generate_video_prompt.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Commit history logs
         if: success()
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add blog_history.txt
-          git commit -m "Update blog history log [skip ci]" || echo "No changes to commit"
+          git add blog_history.txt video_prompt_history.txt
+          git commit -m "Update history logs [skip ci]" || echo "No changes to commit"
           git push
