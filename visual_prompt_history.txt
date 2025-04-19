@@ -1,0 +1,15 @@
+================================================================================
+VISUAL PROMPTS — 2025-04-19 07:17:23
+================================================================================
+[Scene 1] a bustling financial district with skyscrapers and digital billboards displaying stock market tickers, a large building labeled Federal Reserve in the foreground, surrounded by graphs and charts showing rising interest rates, traders looking concerned, and arrows indicating market fluctuations in red and green
+
+[Scene 2] a digital stock market display featuring the S&P 500 and NASDAQ indexes with red downward arrows indicating a decline of 1.2% and 1.5%, respectively, alongside a rising line graph representing the 10-year Treasury yield at 4.85%, set against a backdrop of a bustling financial district with skyscrapers and traders in action.
+
+[Scene 3] a detailed map of the United States, featuring iconic landmarks like the Statue of Liberty, Golden Gate Bridge, and Mount Rushmore, with a blue sky and fluffy white clouds above, and a vibrant landscape showcasing forests, mountains, and cities
+
+[Scene 4] a digital display board showing the Dollar Index at 106.7, surrounded by upward trending green arrows and currency symbols, set against a backdrop of a bustling financial district with skyscrapers and traders in suits.
+
+[Scene 5] a group of diverse institutional investors in formal attire, gathered around a large conference table filled with financial charts and graphs, some displaying rising and falling trends, a backdrop of a large digital screen showing inflation and growth indicators, a tense atmosphere with a balance scale symbolizing the trade-off between inflation control and economic growth, city skyline visible through large windows, soft natural lighting
+
+[Scene 6] a visually striking financial landscape featuring a diverse array of investment assets, including stocks, bonds, real estate, and commodities, displayed as colorful pie charts and bar graphs; a worried investor analyzing data on a laptop, with dark clouds symbolizing uncertainty overhead, while a compass and a shield representing strategic navigation and risk management are prominently placed in the foreground.
+

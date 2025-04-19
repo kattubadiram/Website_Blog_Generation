@@ -8,3 +8,8 @@ VIDEO PROMPT — 2025-04-18 08:43:56
 ================================================================================
 **Prompt:** Create a 20-second professional financial news video. Start with a sleek, corporate newsroom b-roll featuring a host at a desk, dressed in business attire. Overlay on-screen text: "U.S. Equities Decline." Transition to a stock ticker displaying the S&P 500 dropping 1.1%. Use quick cuts to a graph illustrating the rise of 10-year Treasury yields to 4.75%. Show visuals of oil prices climbing to $90 amidst geopolitical tensions. Include a bold overlay: "Consider Portfolio Diversification." Transition to a graphic of the ECB’s rate hold, highlighting Eurozone challenges. End with a BlackRock logo and the message: "Maintain a Cautious Investment Strategy." Use a blue-grey color palette, maintaining a serious and informative tone throughout.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-19 07:17:15
+================================================================================
+In financial news today, global markets are responding to the Federal Reserve's signal of prolonged high-interest rates. The S&P 500 and NASDAQ fell by 1.2% and 1.5%, respectively, while the 10-year Treasury yield climbed to 4.85%. The U.S. Dollar Index also rose to 106.7. Institutional investors are recalibrating risk amid anticipated volatility, emphasizing the delicate balance between inflation control and economic growth. As uncertainty looms, strategic portfolio diversification and risk management remain critical for navigating these challenges.
+
