@@ -7,7 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAIError
 
-# Import our modular image utilities
+# Import updated image utilities
 import image_utils
 
 # ——— Load credentials —————————————————————————————
@@ -17,13 +17,11 @@ WP_USERNAME     = os.getenv("WP_USERNAME")
 WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
 WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
-# ——— Initialize OpenAI —————————————————————————————
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # ——— Helper Functions ———————————————————————————————
 
 def log_blog_to_history(blog_content: str):
-    """Append blog content to history file with timestamp"""
     LOG_FILE = "blog_history.txt"
     ts = datetime.now(pytz.utc)\
              .astimezone(pytz.timezone('America/New_York'))\
@@ -33,7 +31,6 @@ def log_blog_to_history(blog_content: str):
     with open(LOG_FILE, "a") as f:
         f.write(entry)
     print("📋 Logged to", LOG_FILE)
-
 
 def generate_blog():
     system = {
@@ -59,59 +56,35 @@ def generate_blog():
     }
     
     try:
-        # Request JSON format specifically to ensure proper response format
         resp = client.chat.completions.create(
             model="gpt-4o",
             messages=[system, {"role":"user","content":""}],
             temperature=0.7,
             response_format={"type": "json_object"}
         )
-        
-        # Parse the JSON response
-        try:
-            data = json.loads(resp.choices[0].message.content)
-            blog = data["blog"].strip()
-            summary = data["summary"].strip()
-            title = data["title"].strip()
-        except (json.JSONDecodeError, KeyError) as e:
-            # Fallback if JSON parsing fails or expected keys are missing
-            print(f"⚠️ Error processing AI response: {e}")
-            print(f"Raw content received: {resp.choices[0].message.content[:100]}...")
-            
-            # Create fallback content
-            content = resp.choices[0].message.content
-            blog = content if len(content) > 100 else "Recent market movements indicate volatility across multiple sectors. Investors are closely monitoring central bank policies and geopolitical developments. Financial analysts recommend diversified portfolios as a hedge against uncertainty. Market indicators suggest cautious optimism for the coming quarter, with selective opportunities in technology and sustainable energy sectors."
-            summary = "SUMMARY: Financial markets are experiencing volatility influenced by monetary policy shifts and global events. Diversification strategies are recommended while selective sectors offer potential despite broader uncertainty."
-            title = "Market Analysis: Navigating Volatility in Today's Financial Landscape"
-            
-        # Log the blog content to history file
-        log_blog_to_history(blog)
-        return blog, summary, title
-        
-    except OpenAIError as e:
-        # Handle OpenAI API errors
-        print(f"❌ OpenAI API error: {e}")
-        # Return emergency fallback content
-        emergency_blog = "Markets continue to adapt to changing economic conditions. Investors should stay informed about central bank policies and global developments that may impact various sectors. Maintaining a balanced portfolio remains advisable in the current climate."
-        emergency_summary = "SUMMARY: Current market conditions require vigilant monitoring and balanced investment strategies."
-        emergency_title = "Market Update: Strategic Positioning in Current Economic Climate"
-        log_blog_to_history(emergency_blog)
-        return emergency_blog, emergency_summary, emergency_title
+        data = json.loads(resp.choices[0].message.content)
+        blog = data["blog"].strip()
+        summary = data["summary"].strip()
+        title = data["title"].strip()
 
+    except Exception as e:
+        print(f"⚠️ Error processing AI response: {e}")
+        blog = "Markets continue to adapt..."
+        summary = "SUMMARY: Financial markets are experiencing..."
+        title = "Market Update: Strategic Positioning in Current Economic Climate"
+
+    log_blog_to_history(blog)
+    return blog, summary, title
 
 def save_local(blog: str, summary: str):
-    """Save blog content and summary to local files"""
     try:
         with open("blog_summary.txt","w") as f: f.write(summary)
-        with open("blog_post.txt","w") as f:
-            f.write(blog + "\n\n" + summary)
+        with open("blog_post.txt","w") as f: f.write(blog + "\n\n" + summary)
         print("📝 Saved locally")
     except IOError as e:
         print(f"❌ Failed to save local files: {e}")
 
-
 def post_to_wordpress(title: str, content: str, featured_media: int):
-    """Publish post to WordPress with featured image"""
     try:
         payload = {
             "title": title,
@@ -129,38 +102,30 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
     except requests.RequestException as e:
         print(f"❌ Failed to post to WordPress: {e}")
 
-
 # ——— Main Execution ——————————————————————————————
 
 if __name__ == "__main__":
     try:
-        # 1) Create blog
-        print("Generating blog content...")
+        # 1) Create blog content
+        print("📝 Generating blog content...")
         blog_text, summary_text, base_title = generate_blog()
 
-        # 2) Get content-aware image and upload using the modular utilities
-        print("Selecting and uploading relevant header image...")
-        img_url = image_utils.get_advanced_content_aware_image(blog_text, summary_text, base_title)
-        media_obj = image_utils.upload_image_to_wordpress(
-            img_url, 
-            WP_USERNAME, 
-            WP_APP_PASSWORD, 
-            WP_SITE_URL
-        )
+        # 2) Generate poster image from blog content using updated utils
+        print("🎨 Generating and uploading blog poster...")
+        poster_path = image_utils.generate_blog_poster_from_text(blog_text)
+        media_obj = image_utils.upload_image_to_wp(poster_path)
         media_id = media_obj.get("id", 0)
         media_src = media_obj.get("source_url", "")
 
-        # 3) Save drafts locally
-        print("Saving content locally...")
+        # 3) Save blog and summary locally
         save_local(blog_text, summary_text)
 
-        # 4) Timestamp & title string
-        print("Formatting post elements...")
+        # 4) Build final post title with timestamp
         est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
         ts_readable = est_now.strftime("%B %d, %Y %H:%M")
         final_title = f"{ts_readable} EST  |  {base_title}"
 
-        # 5) Build header block: image left, date & title right
+        # 5) Build HTML header
         header_html = (
             '<div style="display:flex; align-items:center; margin-bottom:20px;">'
             f'<div style="flex:1;"><img src="{media_src}" style="width:100%; height:auto;" /></div>'
@@ -171,18 +136,18 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        # 6) Assemble post body
+        # 6) Final blog body
         post_body = (
             header_html +
             f'<p><em>{summary_text}</em></p>\n\n'
-            + f'<div>{blog_text}</div>'
+            f'<div>{blog_text}</div>'
         )
 
-        # 7) Publish!
-        print("Publishing to WordPress...")
+        # 7) Post to WordPress
+        print("📤 Publishing to WordPress...")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
-        
-        print("✅ Process completed successfully!")
-        
+
+        print("✅ Done!")
+
     except Exception as e:
-        print(f"❌ Unexpected error in main process: {e}")
+        print(f"❌ Unexpected error: {e}")
