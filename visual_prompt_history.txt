@@ -26,3 +26,18 @@ VISUAL PROMPTS — 2025-04-19 08:42:11
 
 [Scene 5] a futuristic financial conference room with a large screen displaying fluctuating stock market graphs and sector performance charts, a group of diverse institutional investors in business attire discussing strategies around a sleek glass table, surrounded by digital maps of the globe indicating economic volatility, with arrows pointing to various sectors like technology, energy, and healthcare, all under soft, ambient lighting
 
+================================================================================
+VISUAL PROMPTS — 2025-04-20 08:42:56
+================================================================================
+[Scene 1] a sleek modern newsroom with large screens displaying financial graphs and stock market tickers, a news anchor at a polished desk, surrounded by charts, dollar signs, and a globe, bright studio lights illuminating the scene
+
+[Scene 2] a split-screen view of global financial markets, featuring a bustling New York Stock Exchange with traders reacting, and a serene Asian financial district skyline at dusk, with fluctuating stock charts in the background, displaying both rising and falling trends, alongside flags from various countries, symbolizing mixed reactions.
+
+[Scene 3] a dynamic stock market scene with a large digital display showing fluctuating stock prices, some green arrows rising and some red arrows falling, a diverse group of traders looking at screens with mixed expressions, and a backdrop of a bustling financial district with skyscrapers and billboards.
+
+[Scene 4] a modern central bank building labeled 'The Fed', with a thoughtful group of economists discussing around a large table, surrounded by downward-trending graphs and charts depicting Treasury yields, soft clouds in the background symbolizing easing monetary policy, and a calm blue sky above.
+
+[Scene 5] a bustling cityscape with skyscrapers representing various industries, a large digital screen displaying fluctuating energy prices, ominous storm clouds overhead symbolizing geopolitical tensions, and arrows indicating rising and falling trends in borrowing, all set against a backdrop of a busy financial district.
+
+[Scene 6] a group of diverse institutional investors in formal attire, attentively observing a large digital screen displaying fluctuating economic graphs and sector performance charts, with warning symbols and alert notifications in the background, set in a sleek, modern office environment with glass walls and city skyline views.
+
