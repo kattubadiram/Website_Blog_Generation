@@ -28,3 +28,8 @@ VOICEOVER SCRIPT — 2025-04-21 00:37:23
 ================================================================================
 In a surprising turn, the U.S. GDP growth rate for Q3 soared to 4.9%, surpassing expectations and highlighting economic resilience. However, equity markets reacted cautiously, with both the S&P 500 and Nasdaq Composite declining. The 10-year Treasury yield climbed to 4.85%, indicating expectations of steady Fed rates. As the EUR/USD pair held at 1.055, analysts suggest this strong GDP could reinforce the Fed's hawkish stance. With key labor data on the horizon, investors are closely watching for potential market shifts.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-21 08:47:19
+================================================================================
+"Today, equity markets faced a downturn, with the S&P 500 dropping 0.8% and the Nasdaq sliding 1.2%. This decline follows a spike in the 10-year Treasury yield, now at 4.95%, and a stronger U.S. Dollar. Persistent inflation concerns are fueling speculation about potential Federal Reserve rate hikes. Hedge funds are adopting cautious strategies with net short positions in both equities and bonds. Investors should keep an eye on upcoming Fed communications and GDP data to navigate these turbulent market conditions."
+
