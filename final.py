@@ -150,4 +150,19 @@ if __name__ == "__main__":
             f'<div style="color:#666; font-size:12px; margin-bottom:8px;">{ts_readable} EST</div>'
             f'<h1 style="margin:0; font-size:24px;">{base_title}</h1>'
             '</div>'
-            '</
+            '</div>'
+        )
+
+        post_body = (
+            header_html +
+            f'<p><em>{summary_text}</em></p>\n\n'
+            f'<div>{blog_text}</div>'
+        )
+
+        print("📤 Publishing to WordPress...")
+        post_to_wordpress(final_title, post_body, featured_media=media_id)
+
+        print("✅ Done!")
+
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
