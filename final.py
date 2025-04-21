@@ -172,7 +172,6 @@ if __name__ == "__main__":
 
         post_body = (
             header_html +
-            f'<p><em>{summary_text}</em></p>\n\n'
             f'<div>{blog_text}</div>'
         )
 
