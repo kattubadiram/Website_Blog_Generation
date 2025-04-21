@@ -23,3 +23,8 @@ VOICEOVER SCRIPT — 2025-04-20 08:42:47
 ================================================================================
 This is your financial news update. The latest Federal Reserve minutes have prompted mixed reactions across global markets, with U.S. equities performing unevenly. The Fed's cautious outlook on interest rate hikes signals a potential easing in monetary policy, contributing to lower Treasury yields. While this could support borrowing-sensitive sectors, ongoing geopolitical tensions and fluctuating energy prices present significant risks. Institutional investors are advised to stay alert to these factors, as they could impact economic stability and sector performance.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-21 00:37:23
+================================================================================
+In a surprising turn, the U.S. GDP growth rate for Q3 soared to 4.9%, surpassing expectations and highlighting economic resilience. However, equity markets reacted cautiously, with both the S&P 500 and Nasdaq Composite declining. The 10-year Treasury yield climbed to 4.85%, indicating expectations of steady Fed rates. As the EUR/USD pair held at 1.055, analysts suggest this strong GDP could reinforce the Fed's hawkish stance. With key labor data on the horizon, investors are closely watching for potential market shifts.
+
