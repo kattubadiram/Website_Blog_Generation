@@ -33,3 +33,8 @@ VOICEOVER SCRIPT — 2025-04-21 08:47:19
 ================================================================================
 "Today, equity markets faced a downturn, with the S&P 500 dropping 0.8% and the Nasdaq sliding 1.2%. This decline follows a spike in the 10-year Treasury yield, now at 4.95%, and a stronger U.S. Dollar. Persistent inflation concerns are fueling speculation about potential Federal Reserve rate hikes. Hedge funds are adopting cautious strategies with net short positions in both equities and bonds. Investors should keep an eye on upcoming Fed communications and GDP data to navigate these turbulent market conditions."
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-21 18:11:27
+================================================================================
+Good afternoon. The Federal Reserve's decision to pause interest rate hikes has lifted equity markets, with the S&P 500 and Nasdaq making notable gains. The 10-year Treasury yield fell to 4.58%, signaling expectations of stable monetary policy. Analysts at Goldman Sachs indicate the Fed is closely watching economic indicators to manage inflation. While institutional investors are boosting equity positions, hedge funds are taking a more cautious approach. Eyes will be on upcoming labor market reports and bond yield adjustments as the market navigates growth and inflation.
+
