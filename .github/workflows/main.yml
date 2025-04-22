@@ -36,9 +36,9 @@ jobs:
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
 
-      # 1️⃣ Blog generation using market summary
-      - name: Run blog and summary generator with market data
-        run: .venv/bin/python blog_generator_with_market_data.py
+      # 1️⃣ Blog generation using final.py
+      - name: Run blog and summary generator
+        run: .venv/bin/python final.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
