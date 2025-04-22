@@ -7,8 +7,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAIError
 
-# Import updated image utilities
+# Custom utilities
 import image_utils
+from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
 
 # ——— Load credentials —————————————————————————————
 load_dotenv()
@@ -23,42 +24,37 @@ client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def log_blog_to_history(blog_content: str):
     LOG_FILE = "blog_history.txt"
-    ts = datetime.now(pytz.utc)\
-             .astimezone(pytz.timezone('America/New_York'))\
-             .strftime("%Y-%m-%d %H:%M:%S %Z")
+    ts = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York')).strftime("%Y-%m-%d %H:%M:%S %Z")
     divider = "=" * 80
     entry = f"\n\n{divider}\nBLOG ENTRY - {ts}\n{divider}\n\n{blog_content}\n"
     with open(LOG_FILE, "a") as f:
         f.write(entry)
     print("📋 Logged to", LOG_FILE)
 
-def generate_blog():
+def generate_blog(market_summary: str):
     system = {
-        "role":"system",
-        "content":(
+        "role": "system",
+        "content": (
             "You are a senior financial journalist at a top-tier global financial news organization like Bloomberg. "
-            "Your expertise is in delivering authoritative, data-driven analysis of market movements and economic trends. "
-            "Write in a precise, sophisticated tone that financial professionals and serious investors expect. "
-            "Include specific figures, expert perspectives, and nuanced market insights. "
-            "Analyze both immediate market reactions and potential longer-term implications. "
-            "Focus on institutional investor concerns rather than retail trading tips. "
-        
+            "Use only the factual data provided by the user. Do not invent figures, companies, or events. "
+            "Write a 250-word blog analyzing the day's market based on the given summary. "
+            "Maintain a professional tone suitable for institutional investors.\n\n"
             "Output strict JSON with three fields:\n"
-            "  • \"blog\": a 250-word sophisticated market analysis that blends breaking news with contextual insights. "
-            "Include relevant market data points (indices, yields, currency movements) and reference specific financial "
-            "institutions or analysts where appropriate. Maintain balanced perspective while highlighting key risk factors. "
-            "Connect current events to broader economic narratives.\n"
-            "  • \"summary\": a 100-word executive brief prefixed with 'SUMMARY:' that distills the core market "
-            "implications for institutional investors\n"
-            "  • \"title\": a precise, authoritative headline that signals depth and sophistication rather than "
-            "sensationalism (no timestamp)"
+            "• 'blog': the analysis\n"
+            "• 'summary': a 100-word executive brief prefixed with 'SUMMARY:'\n"
+            "• 'title': an authoritative headline without a timestamp"
         )
     }
-    
+
+    messages = [
+        system,
+        {"role": "user", "content": market_summary}
+    ]
+
     try:
         resp = client.chat.completions.create(
             model="gpt-4o",
-            messages=[system, {"role":"user","content":""}],
+            messages=messages,
             temperature=0.7,
             response_format={"type": "json_object"}
         )
@@ -66,7 +62,6 @@ def generate_blog():
         blog = data["blog"].strip()
         summary = data["summary"].strip()
         title = data["title"].strip()
-
     except Exception as e:
         print(f"⚠️ Error processing AI response: {e}")
         blog = "Markets continue to adapt..."
@@ -78,8 +73,8 @@ def generate_blog():
 
 def save_local(blog: str, summary: str):
     try:
-        with open("blog_summary.txt","w") as f: f.write(summary)
-        with open("blog_post.txt","w") as f: f.write(blog + "\n\n" + summary)
+        with open("blog_summary.txt", "w") as f: f.write(summary)
+        with open("blog_post.txt", "w") as f: f.write(blog + "\n\n" + summary)
         print("📝 Saved locally")
     except IOError as e:
         print(f"❌ Failed to save local files: {e}")
@@ -132,28 +127,27 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
 
 if __name__ == "__main__":
     try:
-        # 1) Create blog content
-        print("📝 Generating blog content...")
-        blog_text, summary_text, base_title = generate_blog()
+        print("📡 Fetching market snapshot...")
+        snapshot = get_market_snapshot()
+        append_snapshot_to_log(snapshot)
+        market_summary = summarize_market_snapshot(snapshot)
 
-        # 2) Fetch and upload blog poster from Unsplash
+        print("📝 Generating blog content...")
+        blog_text, summary_text, base_title = generate_blog(market_summary)
+
         print("🎨 Fetching and uploading blog poster via Unsplash...")
         media_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
         media_id = media_obj.get("id", 0)
         media_src = media_obj.get("source_url", "")
 
-        # 3) Save blog and summary locally
         save_local(blog_text, summary_text)
 
-        # 3.5) Generate and save video narration prompt
         video_prompt = generate_video_prompt(summary_text)
 
-        # 4) Build final post title with timestamp
         est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
         ts_readable = est_now.strftime("%B %d, %Y %H:%M")
         final_title = f"{ts_readable} EST  |  {base_title}"
 
-        # 5) Build HTML header
         header_html = (
             '<div style="display:flex; align-items:center; margin-bottom:20px;">'
             f'<div style="flex:1;"><img src="{media_src}" style="width:100%; height:auto;" /></div>'
@@ -164,14 +158,12 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        # 6) Final blog body
         post_body = (
             header_html +
-            f'<p><em>{summary_text}</em></p>\n\n'
+            f'<p><em>{summary_text}</em></p>\n\n' +
             f'<div>{blog_text}</div>'
         )
 
-        # 7) Post to WordPress
         print("📤 Publishing to WordPress...")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
 
