@@ -108,3 +108,18 @@ VISUAL PROMPTS — 2025-04-22 08:46:20
 
 [Scene 4] a dynamic conference room filled with diverse professionals engaged in discussion, large screens displaying graphs and charts of business trends, a futuristic city skyline visible through the windows, a large banner reading "Business and Finance Innovations" hanging on the wall, bright lighting and a sense of anticipation in the air
 
+================================================================================
+VISUAL PROMPTS — 2025-04-22 18:15:55
+================================================================================
+[Scene 1] a detailed map of the United States, featuring state borders, major cities marked with bright dots, and iconic landmarks like the Statue of Liberty, Golden Gate Bridge, and Mount Rushmore, all set against a backdrop of a clear blue sky and fluffy white clouds.
+
+[Scene 2] a vibrant stock market scene featuring a large digital display board showing the S&P 500 and Nasdaq indices with upward green arrows, surrounded by energetic traders in a bustling trading floor, highlighting technology and financial stock symbols like a computer chip and dollar sign, with a bright blue sky visible through large windows in the background.
+
+[Scene 3] a digital stock market display board showing the Dow Jones Industrial Average rising by 2.10%, with green upward arrows and a line graph illustrating decreasing volatility, set against a backdrop of a bustling financial district with skyscrapers and traders in business attire.
+
+[Scene 4] a dramatic financial news scene featuring a large digital display board showing declining bond yield graphs in green, alongside a rising dollar symbol in gold, with a backdrop of a bustling stock exchange floor filled with diverse traders reacting positively, bright screens displaying stock tickers, and a sense of optimism in the air
+
+[Scene 5] a split-screen image with the left side showing a barrel of crude oil with a rising price tag and an upward arrow, set against a backdrop of a bustling oil refinery; the right side depicts a gold bar with a declining price tag and a downward arrow, set against a backdrop of a stock market graph with falling lines, symbolizing increased risk appetite
+
+[Scene 6] a dynamic stock market scene featuring a large digital display showing the logos of GE and Tesla, with green upward arrows indicating gains, and a bold chart displaying the ARK Innovation ETF soaring 3.64%, surrounded by enthusiastic investors celebrating, and a backdrop of skyscrapers representing financial districts.
+
