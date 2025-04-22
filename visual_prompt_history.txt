@@ -97,3 +97,14 @@ VISUAL PROMPTS — 2025-04-21 18:28:53
 
 [Scene 4] a vibrant financial news studio with multiple screens displaying stock market graphs and charts, a host sitting at a desk with a microphone, surrounded by colorful tickers and digital maps, viewers watching intently in the background, bright lights illuminating the scene, conveying a sense of urgency and excitement.
 
+================================================================================
+VISUAL PROMPTS — 2025-04-22 08:46:20
+================================================================================
+[Scene 1] a bustling news studio filled with screens displaying charts and graphs, a globe in the background, scientists and tech experts in lab coats discussing innovations, bright light illuminating the room, and headlines showcasing breakthroughs in science and technology
+
+[Scene 2] a futuristic city skyline with sleek skyscrapers, interconnected by glowing digital networks, featuring diverse industries like technology, healthcare, and renewable energy, surrounded by a world map with arrows indicating global market connections and innovations, bright colors highlighting progress and dynamism
+
+[Scene 3] a futuristic city skyline with sleek, innovative buildings, glowing with digital screens displaying graphs and charts, a diverse group of investors observing and discussing, surrounded by holographic representations of emerging technologies like AI, renewable energy, and biotechnology, bright blue sky with hints of sunset colors, symbolizing growth and opportunity
+
+[Scene 4] a dynamic conference room filled with diverse professionals engaged in discussion, large screens displaying graphs and charts of business trends, a futuristic city skyline visible through the windows, a large banner reading "Business and Finance Innovations" hanging on the wall, bright lighting and a sense of anticipation in the air
+
