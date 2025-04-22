@@ -26,15 +26,19 @@ jobs:
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 gTTS \
-            ffmpeg-python natsort pillow imageio
+            ffmpeg-python natsort pillow imageio yfinance feedparser
 
       - name: Verify ffmpeg-python is importable
         run: |
           .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
 
-      # 1️⃣ Blog generation
-      - name: Run blog and summary generator
-        run: .venv/bin/python final.py
+      # 🆕 Market data fetch + log
+      - name: Fetch market data and save snapshot
+        run: .venv/bin/python market_snapshot_fetcher.py
+
+      # 1️⃣ Blog generation using market summary
+      - name: Run blog and summary generator with market data
+        run: .venv/bin/python blog_generator_with_market_data.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
@@ -110,6 +114,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add blog_history.txt video_prompt_history.txt visual_prompt_history.txt
+          git add blog_history.txt market_snapshot_log.jsonl video_prompt_history.txt visual_prompt_history.txt
           git commit -m "Update history logs [skip ci]" || echo "No changes to commit"
           git push
