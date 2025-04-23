@@ -37,12 +37,24 @@ jobs:
         run: |
           echo "CHROME_BIN=/usr/bin/chromium-browser" >> $GITHUB_ENV
 
-      - name: Run form monitor
+      - name: Run form monitor and capture output
+        id: monitor
         run: |
-          python form_monitor.py
+          python form_monitor.py > output.txt
+          cat output.txt
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Send Slack Alert
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"📋 Daily Form Monitoring Report\n${{ steps.monitor.outputs.report }}"}' \  
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+          REPORT="${{ steps.monitor.outputs.report }}"
+          if [ -z "$REPORT" ]; then
+            REPORT="⚠️ Form monitor ran but returned no output."
+          fi
+
+          ESCAPED_REPORT=$(echo "$REPORT" | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n')
+
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            --data "{\"text\":\"📋 *Preeti Capital - Daily Form Monitoring Report*\n$ESCAPED_REPORT\"}"
