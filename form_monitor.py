@@ -17,8 +17,8 @@ def test_contact_form(driver):
 
     driver.find_element(By.NAME, "your-name").send_keys("John Tester")
     driver.find_element(By.NAME, "your-email").send_keys("john@test.com")
-    driver.find_element(By.NAME, "tel-800").send_keys("1234567890")
-    driver.find_element(By.NAME, "your-message").send_keys("This is a contact form test.")
+    driver.find_element(By.NAME, "your-phone").send_keys("1234567890")
+    driver.find_element(By.NAME, "your-message").send_keys("Automated test of contact form.")
     driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
 
     time.sleep(3)
@@ -30,7 +30,8 @@ def test_feedback_form(driver):
     time.sleep(2)
 
     driver.find_element(By.NAME, "your-name").send_keys("Jane Feedback")
-    driver.find_element(By.NAME, "your-message").send_keys("This is test feedback.")
+    driver.find_element(By.NAME, "rating").send_keys("4")  # Optional, just sends a value
+    driver.find_element(By.NAME, "your-message").send_keys("Automated test of feedback form.")
     driver.find_element(By.NAME, "your-email").send_keys("feedback@test.com")
     driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
 
