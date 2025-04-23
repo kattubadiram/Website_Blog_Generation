@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
         post_body = (
             header_html +
-            f'<p><em>{summary_text}</em></p>\n\n' +
+            f'<p>This blog is brought to you by Preethi Capital, your trusted source for financial insights.</p>\n\n' +
             f'<div>{blog_text}</div>'
         )
 
