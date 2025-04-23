@@ -58,3 +58,8 @@ VOICEOVER SCRIPT — 2025-04-23 00:58:04
 ================================================================================
 "Global markets rallied today, with the S&P 500 and Nasdaq both climbing over 2%. The VIX index saw a sharp decline, signaling reduced volatility. Bond yields dropped as investors flocked to safe havens, while the US dollar strengthened against major currencies. In commodities, gold fell but natural gas rose. Financials led the way, bolstered by strong earnings from Bank of America, as stocks like GE and Tesla posted notable gains, reflecting growing investor confidence."
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-23 08:48:18
+================================================================================
+Global markets surged today, with the S&P 500 and Nasdaq both gaining over 2.5%. European indices followed, highlighted by the DAX's impressive 2.84% rise. The VIX dropped, signaling reduced volatility. U.S. Treasury yields fell, while the dollar strengthened. In commodities, gold slipped, but oil prices rose. Financials shone, with the XLF ETF up 3.31%. Noteworthy stock performances from General Electric and Tesla underscore a wave of investor optimism.
+
