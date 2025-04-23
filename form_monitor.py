@@ -8,6 +8,7 @@ def setup_driver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080")  # for proper scroll-to-view
     return webdriver.Chrome(options=options)
 
 def test_contact_form(driver):
@@ -19,7 +20,11 @@ def test_contact_form(driver):
     driver.find_element(By.NAME, "your-email").send_keys("john@test.com")
     driver.find_element(By.NAME, "your-phone").send_keys("1234567890")
     driver.find_element(By.NAME, "your-message").send_keys("Automated test of contact form.")
-    driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
+
+    submit_btn = driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
+    driver.execute_script("arguments[0].scrollIntoView(true);", submit_btn)
+    time.sleep(1)
+    driver.execute_script("arguments[0].click();", submit_btn)
 
     time.sleep(3)
     return "Thank you for your message. It has been sent." in driver.page_source
@@ -30,10 +35,13 @@ def test_feedback_form(driver):
     time.sleep(2)
 
     driver.find_element(By.NAME, "your-name").send_keys("Jane Feedback")
-    driver.find_element(By.NAME, "rating").send_keys("4")  # Optional, just sends a value
     driver.find_element(By.NAME, "your-message").send_keys("Automated test of feedback form.")
     driver.find_element(By.NAME, "your-email").send_keys("feedback@test.com")
-    driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
+
+    submit_btn = driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
+    driver.execute_script("arguments[0].scrollIntoView(true);", submit_btn)
+    time.sleep(1)
+    driver.execute_script("arguments[0].click();", submit_btn)
 
     time.sleep(3)
     return "Thank you for your message. It has been sent." in driver.page_source
