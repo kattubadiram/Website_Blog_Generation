@@ -146,6 +146,7 @@ if __name__ == "__main__":
 
         est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
         ts_readable = est_now.strftime("%A, %B %d, %Y %H:%M")
+        final_title = f"{ts_readable} EST  |  {base_title}"
 
         header_html = (
             '<div style="display:flex; align-items:center; margin-bottom:20px;">'
