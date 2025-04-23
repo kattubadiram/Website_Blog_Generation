@@ -40,3 +40,9 @@ jobs:
       - name: Run form monitor
         run: |
           python form_monitor.py
+
+      - name: Send Slack Alert
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"📋 Daily Form Monitoring Report\n${{ steps.monitor.outputs.report }}"}' \  
+          ${{ secrets.SLACK_WEBHOOK_URL }}
