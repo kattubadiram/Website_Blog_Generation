@@ -53,3 +53,8 @@ VOICEOVER SCRIPT — 2025-04-22 18:15:45
 ================================================================================
 U.S. equity markets surged today, with the S&P 500 up 1.96% and the Nasdaq gaining 2.24%, fueled by technology and financial stocks. The Dow also rose by 2.10%, as volatility decreased. Bond yields fell and the dollar strengthened, signaling a shift in investor sentiment. Crude oil prices climbed, while gold declined, reflecting increased risk appetite. Notable gains came from GE and Tesla, and the ARK Innovation ETF soared 3.64%, showcasing robust confidence in growth sectors.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-23 00:58:04
+================================================================================
+"Global markets rallied today, with the S&P 500 and Nasdaq both climbing over 2%. The VIX index saw a sharp decline, signaling reduced volatility. Bond yields dropped as investors flocked to safe havens, while the US dollar strengthened against major currencies. In commodities, gold fell but natural gas rose. Financials led the way, bolstered by strong earnings from Bank of America, as stocks like GE and Tesla posted notable gains, reflecting growing investor confidence."
+
