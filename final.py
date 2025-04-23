@@ -145,8 +145,7 @@ if __name__ == "__main__":
         video_prompt = generate_video_prompt(summary_text)
 
         est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-        ts_readable = est_now.strftime("%B %d, %Y %H:%M")
-        final_title = f"{ts_readable} EST  |  {base_title}"
+        ts_readable = est_now.strftime("%A, %B %d, %Y %H:%M")
 
         header_html = (
             '<div style="display:flex; align-items:center; margin-bottom:20px;">'
