@@ -2,7 +2,7 @@ name: Daily Form Monitoring
 
 on:
   schedule:
-    - cron: "0 14 * * *"  # Daily at 7 AM MST
+    - cron: "25 18 * * *"  # Daily at 7 AM MST
   workflow_dispatch:
 
 jobs:
