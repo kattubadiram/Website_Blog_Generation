@@ -155,3 +155,24 @@ VISUAL PROMPTS — 2025-04-23 08:48:30
 
 [Scene 8] a vibrant stock market scene featuring a large digital display showing rising stock prices for General Electric and Tesla, surrounded by enthusiastic investors celebrating, with green upward arrows and graphs in the background, reflecting a sense of optimism and excitement in the air.
 
+================================================================================
+VISUAL PROMPTS — 2025-04-24 08:48:29
+================================================================================
+[Scene 1] a detailed map of the United States, featuring state boundaries, major cities marked with bright dots, and symbols representing landmarks like the Statue of Liberty, Golden Gate Bridge, and Mount Rushmore, with a blue sky and fluffy white clouds in the background.
+
+[Scene 2] a bustling stock market scene with a large digital display showing the Nasdaq logo and a bright green arrow pointing upwards by 2.5%, surrounded by images of tech giants like Tesla's sleek electric car and NVIDIA's logo, traders celebrating with raised hands, colorful stock charts in the background, and a vibrant city skyline visible through large windows.
+
+[Scene 3] a digital stock market display showing rising graphs and green arrows, with the logos of the S&P 500 and Dow Jones prominently featured, surrounded by excited traders in a bustling financial district, bright screens reflecting positive market trends.
+
+[Scene 4] a split-screen image showing two stock market indices, the FTSE 100 and DAX, represented by their respective logos, with downward-trending red arrows and declining line graphs, set against a backdrop of a gloomy European skyline featuring iconic landmarks like the London Eye and the Brandenburg Gate, with overcast skies and a sense of economic struggle
+
+[Scene 5] a digital stock market display board showing the Nikkei index with an upward green arrow and the Hang Seng index with a downward red arrow, set against a backdrop of Asian city skylines, including Tokyo and Hong Kong, with traders observing the screens in a busy financial office
+
+[Scene 6] a shiny gold ingot resting on a reflective surface, with a backdrop of fluctuating line graphs showing an upward trend, alongside a natural gas flame icon diminishing in size, set against a contrasting background of blue and orange hues, symbolizing the rise and fall in commodity prices.
+
+[Scene 7] a detailed map of the United States, featuring iconic landmarks like the Statue of Liberty, Golden Gate Bridge, and Mount Rushmore, with a backdrop of a clear blue sky and a few fluffy white clouds
+
+[Scene 8] a U.S. dollar bill with a frowning face, positioned next to a strong euro symbol and a robust British pound symbol, all set against a backdrop of a bright, optimistic skyline with upward-trending graphs and smiling investors, conveying a sense of positive sentiment in the U.S. economy
+
+[Scene 9] a bustling financial market scene with traders at desks, multiple screens displaying stock prices and graphs, large digital tickers showing fluctuating numbers, and a diverse group of people in business attire discussing and analyzing data, with a backdrop of towering skyscrapers and a bright city skyline.
+

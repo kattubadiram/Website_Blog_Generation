@@ -63,3 +63,8 @@ VOICEOVER SCRIPT — 2025-04-23 08:48:18
 ================================================================================
 Global markets surged today, with the S&P 500 and Nasdaq both gaining over 2.5%. European indices followed, highlighted by the DAX's impressive 2.84% rise. The VIX dropped, signaling reduced volatility. U.S. Treasury yields fell, while the dollar strengthened. In commodities, gold slipped, but oil prices rose. Financials shone, with the XLF ETF up 3.31%. Noteworthy stock performances from General Electric and Tesla underscore a wave of investor optimism.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-24 08:48:08
+================================================================================
+U.S. markets surged today, with the Nasdaq leading the charge, up 2.5%, driven by strong performances from tech giants like Tesla and NVIDIA. The S&P 500 and Dow Jones also posted gains. In contrast, European markets struggled, with the FTSE 100 and DAX declining. Asian markets showed mixed results, as the Nikkei rose and the Hang Seng fell. In commodities, gold gained while natural gas dipped. Meanwhile, the U.S. dollar weakened against the euro and pound, reflecting a positive sentiment in U.S. markets.
+
