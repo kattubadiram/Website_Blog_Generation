@@ -1,139 +1,56 @@
-name: Post Blog to WordPress
+import os
+from google.cloud import texttospeech
 
-on:
-  schedule:
-    - cron: "30 8 * * *"  # Daily at 1:00 PM EDT / 10:00 AM MST
-  workflow_dispatch:
+def generate_audio():
+    try:
+        # Step 1: Use the existing credentials file
+        credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
+        print(f"Using credentials from: {credentials_path}")
+        
+        # Step 2: Read blog text
+        if not os.path.exists("blog_post.txt"):
+            print("❌ blog_post.txt not found")
+            blog_text = "This is an automated financial news update. Please check our website for the full article."
+        else:
+            with open("blog_post.txt", "r") as f:
+                blog_text = f.read()
+            print(f"✅ Loaded blog text ({len(blog_text)} characters)")
+        
+        # Step 3: Set up client and Wavenet voice config
+        print("Initializing Text-to-Speech client...")
+        client = texttospeech.TextToSpeechClient()
+        print("✅ Client initialized")
+        
+        input_text = texttospeech.SynthesisInput(text=blog_text)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Wavenet-D"  # Or try Wavenet-F for female
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+        
+        # Step 4: Generate and save audio
+        print("Generating speech...")
+        response = client.synthesize_speech(
+            input=input_text, voice=voice, audio_config=audio_config
+        )
+        print("✅ Speech generated successfully")
+        
+        with open("blog_voiceover.mp3", "wb") as out:
+            out.write(response.audio_content)
+        print("✅ Voiceover saved as blog_voiceover.mp3")
+        
+    except Exception as e:
+        print(f"❌ Error generating audio: {e}")
+        # Optional: Create a fallback silent file if generation fails
+        try:
+            with open("blog_voiceover.mp3", "wb") as f:
+                silent_mp3 = b'\xFF\xE3\x18\xC4\x00\x00\x00\x03H\x00\x00\x00\x00LAME3.100\x00' + b'\x00' * 50
+                f.write(silent_mp3)
+            print("⚠️ Created fallback silent audio file")
+        except Exception as sub_e:
+            print(f"❌ Also failed to write fallback audio: {sub_e}")
 
-permissions:
-  contents: write
-
-jobs:
-  post-blog:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: true
-
-      - name: Set up Python & Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install --no-cache-dir \
-            pytz requests python-dotenv openai>=1.0.0 \
-            ffmpeg-python natsort pillow imageio yfinance feedparser \
-            google-cloud-texttospeech gtts
-
-      - name: Verify ffmpeg-python is importable
-        run: |
-          .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
-
-      # 🆕 Market data fetch + log
-      - name: Fetch market data and save snapshot
-        run: .venv/bin/python market_snapshot_fetcher.py
-
-      # 1️⃣ Blog generation using final.py
-      - name: Run blog and summary generator
-        run: .venv/bin/python final.py
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
-      # 🔐 Write Google credentials for TTS
-      - name: Write Google credentials to file
-        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
-        env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-
-      # Verify Google credentials can be used with the Text-to-Speech client
-      - name: Verify Google Cloud credentials
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('✅ Google Cloud authentication works')"
-
-      - name: Generate blog voiceover (Wavenet)
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python generate_audio_from_blog.py
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
-
-      - name: Upload blog audio to WordPress
-        run: .venv/bin/python upload_audio_and_embed.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
-      # 3️⃣ Video script + voiceover
-      - name: Generate 20s video narration
-        run: .venv/bin/python generate_video_prompt.py
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Generate video voiceover
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python generate_audio_for_video.py
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
-
-      # 4️⃣ Visuals from DALL·E
-      - name: Generate visual prompts
-        run: .venv/bin/python generate_visual_prompts.py
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Generate AI images
-        run: .venv/bin/python generate_ai_images.py
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      # 5️⃣ Final video using ffmpeg-python
-      - name: Create video from images and audio
-        run: .venv/bin/python generate_video_from_images.py
-
-      - name: Upload video to WordPress
-        run: .venv/bin/python upload_video_to_wp.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-      
-      # 6️⃣ YouTube integration
-      - name: Install YouTube uploader dependencies
-        run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
-
-      - name: Restore YouTube token
-        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
-        env:
-          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN_B64 }}
-
-      - name: Upload video to YouTube Shorts
-        run: .venv/bin/python upload_to_youtube.py
-
-      # 6️⃣ Save generated AI images to repo
-      - name: Save AI-generated images to repo
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git add ai_images/*.png
-          git commit -m "Save AI-generated scene images [skip ci]" || echo "No image changes to commit"
-          git push
-
-      # 7️⃣ Commit logs
-      - name: Commit history logs
-        if: success()
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git add blog_history.txt market_snapshot_log.jsonl video_prompt_history.txt visual_prompt_history.txt
-          git commit -m "Update history logs [skip ci]" || echo "No changes to commit"
-          git push
+if __name__ == "__main__":
+    generate_audio()
