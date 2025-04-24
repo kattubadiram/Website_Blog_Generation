@@ -55,6 +55,6 @@ jobs:
 
           ESCAPED_REPORT=$(echo "$REPORT" | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n')
 
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL_2 }} \
             -H 'Content-type: application/json' \
             --data "{\"text\":\"📋 *Preeti Capital - Daily Form Monitoring Report*\n$ESCAPED_REPORT\"}"
