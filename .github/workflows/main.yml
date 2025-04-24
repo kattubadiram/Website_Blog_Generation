@@ -27,7 +27,7 @@ jobs:
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow imageio yfinance feedparser \
-            google-cloud-texttospeech
+            google-cloud-texttospeech gtts
 
       - name: Verify ffmpeg-python is importable
         run: |
@@ -52,10 +52,18 @@ jobs:
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
 
+      # Verify Google credentials can be used with the Text-to-Speech client
+      - name: Verify Google Cloud credentials
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('✅ Google Cloud authentication works')"
+
       - name: Generate blog voiceover (Wavenet)
         run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="google-credentials.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
 
       - name: Upload blog audio to WordPress
         run: .venv/bin/python upload_audio_and_embed.py
@@ -71,7 +79,11 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Generate video voiceover
-        run: .venv/bin/python generate_audio_for_video.py
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python generate_audio_for_video.py
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
 
       # 4️⃣ Visuals from DALL·E
       - name: Generate visual prompts
