@@ -25,8 +25,9 @@ jobs:
           python3 -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --no-cache-dir \
-            pytz requests python-dotenv openai>=1.0.0 gTTS \
-            ffmpeg-python natsort pillow imageio yfinance feedparser
+            pytz requests python-dotenv openai>=1.0.0 \
+            ffmpeg-python natsort pillow imageio yfinance feedparser \
+            google-cloud-texttospeech
 
       - name: Verify ffmpeg-python is importable
         run: |
@@ -45,9 +46,16 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # 2️⃣ Blog voiceover
-      - name: Generate blog voiceover
-        run: .venv/bin/python generate_audio_from_blog.py
+      # 🔐 Write Google credentials for TTS
+      - name: Write Google credentials to file
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+
+      - name: Generate blog voiceover (Wavenet)
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="google-credentials.json"
+          .venv/bin/python generate_audio_from_blog.py
 
       - name: Upload blog audio to WordPress
         run: .venv/bin/python upload_audio_and_embed.py
@@ -99,7 +107,7 @@ jobs:
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
 
-      # 6️⃣ Save generated AI images to GitHub
+      # 6️⃣ Save generated AI images to repo
       - name: Save AI-generated images to repo
         run: |
           git config --global user.name "GitHub Actions Bot"
