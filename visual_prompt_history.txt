@@ -189,3 +189,22 @@ VISUAL PROMPTS — 2025-04-25 03:36:44
 
 [Scene 5] a vibrant financial market scene featuring a rising graph line representing Brent Crude oil prices, a strong U.S. Dollar symbol with arrows pointing upward against the euro and pound symbols, and a digital display of tech sector ETF logos like XLK and ARKK, with enthusiastic investors celebrating in the background, surrounded by screens showing stock market data and positive trends.
 
+================================================================================
+VISUAL PROMPTS — 2025-04-25 08:47:30
+================================================================================
+[Scene 1] a detailed map of the United States, featuring state boundaries, major cities marked with colorful dots, and various geographical landmarks, with a blue sky and fluffy white clouds in the background
+
+[Scene 2] a vibrant stock market scene featuring a large digital display showing the S&P 500 and Nasdaq indices with green upward arrows, surrounded by enthusiastic traders in a bustling financial district, with modern skyscrapers and a prominent tech company logo in the background, conveying a sense of excitement and growth.
+
+[Scene 3] a dynamic stock market scene featuring a prominent ARKK ETF logo with a glowing upward arrow indicating a 4.25% gain, alongside the Oracle and Intel logos radiating light, set against a backdrop of digital stock charts and green upward trends, with excited traders in the foreground celebrating the performance
+
+[Scene 4] a downward-sloping graph with bond yield lines decreasing, juxtaposed with a rising graph of equity stocks, a background of a bustling financial district with skyscrapers, and traders analyzing data on screens, all under a clear blue sky
+
+[Scene 5] a close-up view of a trading screen displaying falling graphs for gold and natural gas futures, with gold bars and natural gas flames in the background, surrounded by red downward arrows and a worried trader analyzing market trends
+
+[Scene 6] a close-up of U.S. dollar bills spread out on a wooden table, with a backdrop of financial charts and graphs showing currency trends, a calculator and a pen beside the money, soft natural lighting illuminating the scene.
+
+[Scene 7] a digital display showing a rising Dollar Index graph with a prominent dollar symbol, alongside declining graphs for the Euro and Japanese yen, with the Euro symbol (€) and yen symbol (¥) depicted in red, set against a backdrop of a financial district skyline, with currency notes and coins scattered in the foreground
+
+[Scene 8] a vibrant city skyline with modern technology buildings, featuring digital screens displaying tech logos, contrasted with a fading image of traditional grocery stores and consumer staple products, arrows indicating a shift from one to the other, bright blue sky above and bustling streets below.
+

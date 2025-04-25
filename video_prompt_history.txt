@@ -73,3 +73,8 @@ VOICEOVER SCRIPT — 2025-04-25 03:36:36
 ================================================================================
 Global markets rallied today, with the Nasdaq leading the charge, up 2.74%, fueled by strong performances from tech giants like Oracle and Intel. The S&P 500 climbed 2.03%, while the Dow Jones gained 1.23%. The VIX dropped nearly 7%, signaling reduced market anxiety. European and Asian indices followed suit, and bond yields fell. In commodities, Brent Crude rose slightly, and the Dollar strengthened against the euro and pound, as tech sector ETFs like XLK and ARKK saw impressive gains, reflecting robust investor confidence.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-25 08:47:17
+================================================================================
+U.S. markets surged today, with the S&P 500 and Nasdaq both climbing over 2%, fueled by a strong performance in the tech sector. The ARKK ETF led the way with a 4.25% gain, while Oracle and Intel shone as top performers. Meanwhile, bond yields fell, indicating a shift toward equities. In commodities, both gold and natural gas futures dropped. On the currency front, the U.S. Dollar Index strengthened, as the Euro and Japanese yen weakened against the dollar. A clear rotation from consumer staples to technology is underway.
+

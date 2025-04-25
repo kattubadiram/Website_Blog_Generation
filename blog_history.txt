@@ -338,3 +338,18 @@ Bond yields saw a decline, with the 10-year Treasury (^TNX) yield down 1.87%, re
 Currency movements showed the dollar gaining strength, with the Dollar Index (DX-Y.NYB) rising by 0.24%, while the euro and pound weakened against the dollar.
 
 Sector ETFs highlighted the tech sector's dominance, with the XLK jumping 3.73% and the ARKK ETF leading gains at 4.25%, showcasing strong investor confidence in innovation-driven companies.
+
+
+================================================================================
+BLOG ENTRY - 2025-04-25 04:46:29 EDT
+================================================================================
+
+This blog is brought to you by Preeti Capital, your trusted source for financial insights.
+
+In a robust trading session, U.S. equity markets surged with significant gains reflected across major indices. The S&P 500 (^GSPC) advanced by 2.03% to 5484.77, while the Nasdaq (^IXIC) led with a notable 2.74% increase, closing at 17166.043. The Dow Jones Industrial Average (^DJI) also posted gains, up 1.23%. This bullish momentum was supported by tech giants and innovation-focused ETFs, with the ARKK ETF climbing an impressive 4.25%.
+
+Bond yields declined, notably the 10-year Treasury (^TNX), which fell by 1.87%, indicating strong investor confidence in equities over bonds. Commodities faced a slight downturn, with gold futures (GC=F) dropping 1.19% and natural gas (NG=F) down by 1.02%.
+
+Currency markets saw the U.S. Dollar Index (DX-Y.NYB) rise by 0.29%, while the Euro weakened against the dollar, down 0.35% to 1.1351. The Japanese yen also depreciated, crossing the 143 mark.
+
+Sector performance was led by technology, as the Technology Select Sector SPDR Fund (XLK) surged 3.73%. Among individual stocks, Oracle (ORCL) and Intel (INTC) were top performers, posting gains over 4%. Conversely, Procter & Gamble (PG) fell by 3.74%, suggesting sectoral rotation from consumer staples to growth-oriented sectors.
