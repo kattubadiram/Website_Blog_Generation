@@ -4,7 +4,7 @@ from glob import glob
 from natsort import natsorted
 
 IMG_DIR = "ai_images"
-AUDIO_FILE = "voiceover.mp3"
+AUDIO_FILE = "video_voiceover.mp3"
 OUTPUT = "video_output.mp4"
 TEMP_DIR = "temp_frames"
 
