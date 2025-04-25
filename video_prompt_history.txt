@@ -68,3 +68,8 @@ VOICEOVER SCRIPT — 2025-04-24 08:48:08
 ================================================================================
 U.S. markets surged today, with the Nasdaq leading the charge, up 2.5%, driven by strong performances from tech giants like Tesla and NVIDIA. The S&P 500 and Dow Jones also posted gains. In contrast, European markets struggled, with the FTSE 100 and DAX declining. Asian markets showed mixed results, as the Nikkei rose and the Hang Seng fell. In commodities, gold gained while natural gas dipped. Meanwhile, the U.S. dollar weakened against the euro and pound, reflecting a positive sentiment in U.S. markets.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-25 03:36:36
+================================================================================
+Global markets rallied today, with the Nasdaq leading the charge, up 2.74%, fueled by strong performances from tech giants like Oracle and Intel. The S&P 500 climbed 2.03%, while the Dow Jones gained 1.23%. The VIX dropped nearly 7%, signaling reduced market anxiety. European and Asian indices followed suit, and bond yields fell. In commodities, Brent Crude rose slightly, and the Dollar strengthened against the euro and pound, as tech sector ETFs like XLK and ARKK saw impressive gains, reflecting robust investor confidence.
+
