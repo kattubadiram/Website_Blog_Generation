@@ -114,7 +114,7 @@ jobs:
       - name: Restore YouTube token
         run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
         env:
-          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN_B64 }}
+          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN }}
 
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
