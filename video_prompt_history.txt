@@ -78,3 +78,8 @@ VOICEOVER SCRIPT — 2025-04-25 08:47:17
 ================================================================================
 U.S. markets surged today, with the S&P 500 and Nasdaq both climbing over 2%, fueled by a strong performance in the tech sector. The ARKK ETF led the way with a 4.25% gain, while Oracle and Intel shone as top performers. Meanwhile, bond yields fell, indicating a shift toward equities. In commodities, both gold and natural gas futures dropped. On the currency front, the U.S. Dollar Index strengthened, as the Euro and Japanese yen weakened against the dollar. A clear rotation from consumer staples to technology is underway.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-25 19:14:07
+================================================================================
+Good afternoon. Today’s market showed mixed results. The S&P 500 and NASDAQ climbed, driven by strong gains in the tech sector, while the Dow saw a slight rise and the Russell 2000 fell. Internationally, most European and Asian markets advanced, with Japan's Nikkei leading the way. In commodities, gold and silver prices dipped, but crude oil edged higher. The U.S. Dollar strengthened as the euro weakened. Notably, Tesla surged over 9%, while Intel faced pressure, dropping more than 7%.
+
