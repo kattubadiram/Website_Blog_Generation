@@ -21,24 +21,40 @@ def split_into_scenes(script_text):
 
 # ——— Generate visual prompt for each scene —————————————————
 def generate_visual_prompt(sentence):
-    system_msg = "You are a professional visual prompt engineer for AI-generated imagery."
-    user_prompt = (
-        "Convert the following narration sentence into a DALL·E-compatible visual prompt. "
-        "Focus on the visual elements described or implied. Use descriptive, specific nouns and adjectives. "
-        "Avoid abstract or non-visual words. Example: narration → 'The Federal Reserve raised rates today' becomes → 'a tall modern government building labeled Federal Reserve, surrounded by falling red arrows and interest rate charts.'\n\n"
-        f"NARRATION: {sentence}\nVISUAL PROMPT:"
+    system_msg = (
+        "You are a professional visual prompt engineer specializing in AI-generated images.\n"
+        "Your task is to convert the narration sentence into a simple, DALL·E-compatible visual prompt.\n"
+        "- Focus on **one or two main visual subjects** only.\n"
+        "- **Avoid** describing multiple disconnected ideas or 'split screens'.\n"
+        "- Use **descriptive adjectives and concrete nouns**.\n"
+        "- Create a **single cohesive scene** that is easy to visualize and render.\n"
+        "- Keep the prompt under 200 words.\n"
+        "Example:\n"
+        "Narration: 'The Federal Reserve raised rates today.'\n"
+        "Visual Prompt: 'A tall modern government building labeled Federal Reserve, surrounded by falling red arrows showing interest rates.'\n"
     )
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.5
-    )
+    user_prompt = f"NARRATION: {sentence}\n\nVISUAL PROMPT:"
 
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"❌ Error generating visual prompt: {e}")
+        # ——— Fallback prompt
+        fallback_prompt = (
+            "An animated illustration of a stock market trading floor with rising and falling green and red candlestick charts, "
+            "large stock ticker boards, and arrows showing market movement."
+        )
+        print(f"⚡ Using fallback prompt instead.")
+        return fallback_prompt
 
 # ——— Save visual prompts as individual files ——————————————————
 def save_individual_prompts(prompts):
@@ -63,7 +79,8 @@ def save_to_history_file(prompts):
 if __name__ == "__main__":
     script = load_narration()
     scenes = split_into_scenes(script)
-    
+    scenes = scenes[:5]  # ✅ Limit to first 5 scenes only
+
     visual_prompts = []
     for i, sentence in enumerate(scenes, start=1):
         print(f"🧠 Converting scene {i}: {sentence}")
