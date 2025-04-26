@@ -3,7 +3,7 @@ import base64
 import os
 from dotenv import load_dotenv
 
-# ——— Load credentials —————————————————————————
+# ——— Load credentials from .env ———————————————————————
 load_dotenv()
 WP_USERNAME = os.getenv("WP_USERNAME")
 WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
@@ -11,7 +11,7 @@ WP_SITE_URL = os.getenv("WP_SITE_URL")
 VIDEO_FILE = "video_output.mp4"
 VIDEO_TITLE = "AI-Generated Market News Video"
 
-# ——— Upload video to WordPress Media ——————————————
+# ——— Upload video to WordPress Media Library ——————————
 def upload_video():
     media_endpoint = f"{WP_SITE_URL}/wp-json/wp/v2/media"
     auth = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
@@ -22,18 +22,22 @@ def upload_video():
         "Content-Type": "video/mp4"
     }
 
-    with open(VIDEO_FILE, "rb") as f:
-        response = requests.post(media_endpoint, headers=headers, data=f)
+    try:
+        with open(VIDEO_FILE, "rb") as f:
+            response = requests.post(media_endpoint, headers=headers, data=f)
 
-    if response.status_code == 201:
-        video_url = response.json()["source_url"]
-        print(f"✅ Uploaded video to WordPress: {video_url}")
-        return video_url
-    else:
-        print(f"❌ Failed to upload video: {response.text}")
+        if response.status_code == 201:
+            video_url = response.json()["source_url"]
+            print(f"✅ Uploaded video to WordPress: {video_url}")
+            return video_url
+        else:
+            print(f"❌ Failed to upload video: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"❌ Error opening video file: {e}")
         return None
 
-# ——— Embed video in latest blog post ——————————————————
+# ——— Embed video into latest blog post ——————————————————
 def embed_video(video_url):
     auth = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
     headers = {
@@ -41,27 +45,45 @@ def embed_video(video_url):
         "Content-Type": "application/json"
     }
 
-    # Get most recent post
-    posts = requests.get(f"{WP_SITE_URL}/wp-json/wp/v2/posts", headers=headers).json()
-    if not posts:
-        print("❌ No posts found.")
-        return
+    try:
+        # Get most recent post
+        posts_resp = requests.get(f"{WP_SITE_URL}/wp-json/wp/v2/posts", headers=headers)
+        posts = posts_resp.json()
 
-    post_id = posts[0]['id']
-    content = posts[0]['content']['rendered']  # ✅ FIXED
+        if not posts:
+            print("❌ No posts found.")
+            return
 
-    # ✅ Place video at the end of the post
-    new_content = f'{content}\n\n<video controls width="100%">\n  <source src="{video_url}" type="video/mp4">\n</video>'
-    payload = {"content": new_content}
+        post_id = posts[0]['id']
+        content = posts[0]['content']['rendered']
 
-    resp = requests.post(f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}", headers=headers, json=payload)
+        # Append styled vertical video embed
+        embed_html = f"""
+<div style="text-align: center;">
+  <video controls playsinline style="max-width: 360px; width: 100%; height: auto;">
+    <source src="{video_url}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
+"""
+        new_content = f"{content}\n\n{embed_html.strip()}"
+        payload = {"content": new_content}
 
-    if resp.status_code == 200:
-        print("✅ Video embedded successfully.")
-    else:
-        print(f"❌ Failed to embed video: {resp.text}")
+        update_resp = requests.post(
+            f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}",
+            headers=headers,
+            json=payload
+        )
 
-# ——— Main Execution ————————————————————————————
+        if update_resp.status_code == 200:
+            print("✅ Video embedded successfully into the latest post.")
+        else:
+            print(f"❌ Failed to embed video: {update_resp.status_code} - {update_resp.text}")
+
+    except Exception as e:
+        print(f"❌ Error embedding video: {e}")
+
+# ——— Main ————————————————————————————————————————————————
 if __name__ == "__main__":
     video_url = upload_video()
     if video_url:
