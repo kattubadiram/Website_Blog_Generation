@@ -18,12 +18,23 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: Set up Python & Install Dependencies
+      - name: Set up Python environment
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/generate_video_heygen.py', '**/edit_and_merge_video.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow imageio==2.31.1 imageio-ffmpeg==0.4.8 \
@@ -46,7 +57,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # 🔐 Write Google credentials for TTS
+      # 🔐 Write Google credentials to file
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
@@ -101,9 +112,27 @@ jobs:
         env:
           HEYGEN_API_KEY: ${{ secrets.HEYGEN_API }}
 
+      # 🆕 Save generated avatar video immediately
+      - name: Save generated avatar video to repo
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add avatar_video.mp4
+          git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
+          git push
+
       # 6️⃣ Edit avatar video with AI-generated images
       - name: Merge avatar video and overlay images
         run: .venv/bin/python edit_and_merge_video.py
+
+      # 🆕 Save generated final video immediately
+      - name: Save generated video to repo
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add video_output.mp4
+          git commit -m "Save generated video_output.mp4 [skip ci]" || echo "No video changes to commit"
+          git push
 
       - name: Upload video to WordPress
         run: .venv/bin/python upload_video_to_wp.py
@@ -130,7 +159,7 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add ai_images/*.png
-          git commit -m "Save AI-generated scene images [skip ci]" || echo "No image changes to commit"
+          git commit -m "Save AI-generated scene images [skip ci]" || echo "No AI image changes to commit"
           git push
 
       # 9️⃣ Commit history logs
@@ -140,5 +169,5 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add blog_history.txt market_snapshot_log.jsonl video_prompt_history.txt visual_prompt_history.txt
-          git commit -m "Update history logs [skip ci]" || echo "No changes to commit"
+          git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
           git push
