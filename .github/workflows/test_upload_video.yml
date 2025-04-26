@@ -1,0 +1,32 @@
+name: Test Upload Video to WordPress
+
+on:
+  workflow_dispatch:  # Trigger manually from GitHub Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  test-upload-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        run: |
+          sudo apt-get update
+          python3 -m venv .venv
+
+      - name: Install dependencies for WordPress upload
+        run: |
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install requests python-dotenv
+
+      - name: Upload video to WordPress and embed
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
