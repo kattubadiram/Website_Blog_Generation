@@ -88,3 +88,8 @@ VOICEOVER SCRIPT — 2025-04-26 04:42:13
 ================================================================================
 Global markets are on the rise today, driven by strong gains in technology stocks. The S&P 500 and Nasdaq both saw significant increases, bolstered by a nearly 10% surge in Tesla shares. However, Intel struggled, dropping over 6% after disappointing earnings. In commodities, oil prices climbed while gold and silver slipped. Bond yields fell, reflecting a cautious economic outlook. Meanwhile, the U.S. dollar strengthened, leading to declines in the Euro and Pound.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-26 08:43:58
+================================================================================
+Good afternoon. Today's markets experienced a broad rally, led by technology stocks. The Nasdaq surged 1.26%, buoyed by Tesla's nearly 10% jump. European and Asian indices, including the DAX and Nikkei, also posted gains. Meanwhile, bond yields fell, signaling a flight to safety, as the US Dollar edged up. In commodities, crude oil prices rose, while gold and silver dipped. Overall, investor sentiment remains optimistic, particularly in tech, despite mixed performance in financials and energy.
+
