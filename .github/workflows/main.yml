@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
           python3 -m venv .venv
 
       - name: Cache pip dependencies
@@ -112,26 +112,26 @@ jobs:
         env:
           HEYGEN_API_KEY: ${{ secrets.HEYGEN_API }}
 
-      # 🆕 Save generated avatar video immediately
-      - name: Save generated avatar video to repo
+      - name: Save generated avatar video immediately
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add avatar_video.mp4
           git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
       # 6️⃣ Edit avatar video with AI-generated images
       - name: Merge avatar video and overlay images
         run: .venv/bin/python edit_and_merge_video.py
 
-      # 🆕 Save generated final video immediately
-      - name: Save generated video to repo
+      - name: Save generated final video immediately
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add video_output.mp4
           git commit -m "Save generated video_output.mp4 [skip ci]" || echo "No video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
       - name: Upload video to WordPress
@@ -160,6 +160,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git add ai_images/*.png
           git commit -m "Save AI-generated scene images [skip ci]" || echo "No AI image changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
       # 9️⃣ Commit history logs
@@ -170,4 +171,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git add blog_history.txt market_snapshot_log.jsonl video_prompt_history.txt visual_prompt_history.txt
           git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
