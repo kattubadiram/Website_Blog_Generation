@@ -83,3 +83,8 @@ VOICEOVER SCRIPT — 2025-04-25 19:14:07
 ================================================================================
 Good afternoon. Today’s market showed mixed results. The S&P 500 and NASDAQ climbed, driven by strong gains in the tech sector, while the Dow saw a slight rise and the Russell 2000 fell. Internationally, most European and Asian markets advanced, with Japan's Nikkei leading the way. In commodities, gold and silver prices dipped, but crude oil edged higher. The U.S. Dollar strengthened as the euro weakened. Notably, Tesla surged over 9%, while Intel faced pressure, dropping more than 7%.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-26 04:42:13
+================================================================================
+Global markets are on the rise today, driven by strong gains in technology stocks. The S&P 500 and Nasdaq both saw significant increases, bolstered by a nearly 10% surge in Tesla shares. However, Intel struggled, dropping over 6% after disappointing earnings. In commodities, oil prices climbed while gold and silver slipped. Bond yields fell, reflecting a cautious economic outlook. Meanwhile, the U.S. dollar strengthened, leading to declines in the Euro and Pound.
+
