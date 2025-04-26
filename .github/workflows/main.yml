@@ -26,12 +26,12 @@ jobs:
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
-            ffmpeg-python natsort pillow imageio yfinance feedparser \
+            ffmpeg-python natsort pillow imageio==2.31.1 imageio-ffmpeg==0.4.8 \
+            moviepy==1.0.3 yfinance feedparser \
             google-cloud-texttospeech gtts
 
       - name: Verify ffmpeg-python is importable
-        run: |
-          .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
+        run: .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
 
       # 🆕 Market data fetch + log
       - name: Fetch market data and save snapshot
@@ -52,7 +52,6 @@ jobs:
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
 
-      # Verify Google credentials can be used with the Text-to-Speech client
       - name: Verify Google Cloud credentials
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
@@ -96,9 +95,15 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      # 5️⃣ Final video using ffmpeg-python
-      - name: Create video from images and audio
-        run: .venv/bin/python generate_video_from_images.py
+      # 5️⃣ Generate avatar video using HeyGen API
+      - name: Generate avatar video
+        run: .venv/bin/python generate_video_heygen.py
+        env:
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API }}
+
+      # 6️⃣ Edit avatar video with AI-generated images
+      - name: Merge avatar video and overlay images
+        run: .venv/bin/python edit_and_merge_video.py
 
       - name: Upload video to WordPress
         run: .venv/bin/python upload_video_to_wp.py
@@ -106,8 +111,8 @@ jobs:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-      
-      # 6️⃣ YouTube integration
+
+      # 7️⃣ YouTube integration
       - name: Install YouTube uploader dependencies
         run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
 
@@ -119,7 +124,7 @@ jobs:
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
 
-      # 6️⃣ Save generated AI images to repo
+      # 8️⃣ Save generated AI images to repo
       - name: Save AI-generated images to repo
         run: |
           git config --global user.name "GitHub Actions Bot"
@@ -128,7 +133,7 @@ jobs:
           git commit -m "Save AI-generated scene images [skip ci]" || echo "No image changes to commit"
           git push
 
-      # 7️⃣ Commit logs
+      # 9️⃣ Commit history logs
       - name: Commit history logs
         if: success()
         run: |
