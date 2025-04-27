@@ -92,7 +92,7 @@ def generate_video_prompt(summary_text):
                 },
                 {
                     "role": "user",
-                    "content": f"Write a 2-sentence narration suitable for a financial short video based on this summary:\n\n{summary_text}"
+                    "content": f" This should be the first line - ("Welcome to Preeti Capital") then write a 2-sentence narration suitable for a financial short video based on this summary:\n\n{summary_text}"
                 }
             ],
             temperature=0.6
