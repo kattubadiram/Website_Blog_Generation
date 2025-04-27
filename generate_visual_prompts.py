@@ -24,6 +24,7 @@ def generate_visual_prompt(sentence):
     system_msg = (
         "You are a professional visual prompt engineer specializing in AI-generated images.\n"
         "Your task is to convert the narration sentence into a simple, DALL·E-compatible visual prompt.\n"
+        "- All images should be strictly related to finance.\n"
         "- Focus on **one or two main visual subjects** only.\n"
         "- **Avoid** describing multiple disconnected ideas or 'split screens'.\n"
         "- Use **descriptive adjectives and concrete nouns**.\n"
