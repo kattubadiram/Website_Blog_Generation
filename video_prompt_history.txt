@@ -93,3 +93,8 @@ VOICEOVER SCRIPT — 2025-04-26 08:43:58
 ================================================================================
 Good afternoon. Today's markets experienced a broad rally, led by technology stocks. The Nasdaq surged 1.26%, buoyed by Tesla's nearly 10% jump. European and Asian indices, including the DAX and Nikkei, also posted gains. Meanwhile, bond yields fell, signaling a flight to safety, as the US Dollar edged up. In commodities, crude oil prices rose, while gold and silver dipped. Overall, investor sentiment remains optimistic, particularly in tech, despite mixed performance in financials and energy.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-27 08:43:58
+================================================================================
+Good afternoon. U.S. markets rallied today, with the Nasdaq leading the charge, up 1.26%. The S&P 500 and Dow also posted gains, as the VIX fell, signaling lower volatility. Internationally, the Nikkei surged, while the Shanghai Composite dipped. Bond yields declined, reflecting strong demand for safe assets, and the U.S. dollar strengthened. In commodities, oil prices rose, but precious metals fell. Notably, Tesla soared 10%, while Intel faced a 6.7% drop due to outlook concerns.
+
