@@ -1,25 +1,61 @@
 import os
 import time
 import requests
+from datetime import datetime
 
 # ------------------ CONFIG -------------------
 HEYGEN_API_KEY = os.environ.get('HEYGEN_API_KEY')  # <-- from GitHub Secret
 SCRIPT_FILE = 'video_prompt.txt'
 AVATAR_OUTPUT = 'avatar_video.mp4'
 
-AVATAR_ID = 'Georgia_standing_casual_side'
-VOICE_ID = '511ffd086a904ef593b608032004112c'
 VIDEO_WIDTH = 1280
 VIDEO_HEIGHT = 720
 SPEAK_SPEED = 1.0
+
+# Avatars and their corresponding voices
+AVATAR_VOICE_PAIRS = [
+    {
+        "avatar_id": "Gala_sitting_businesssofa_front",
+        "voice_id": "35b75145af9041b298c720f23375f578",  # Gala - Lifelike
+        "name": "Gala"
+    },
+    {
+        "avatar_id": "Masha_standing_office_front",
+        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Masha - Lifelike
+        "name": "Masha"
+    },
+    {
+        "avatar_id": "Georgia_expressive_2024112701",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia (Upper Body)"
+    },
+    {
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
+    },
+    {
+        "avatar_id": "Aubrey_standing_night_scene_front",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Aubrey"
+    },
+]
 
 # ------------------ STEP 1: Read Script -------------------
 def read_script(script_file):
     with open(script_file, 'r', encoding='utf-8') as f:
         return f.read()
 
-# ------------------ STEP 2: Generate Avatar -------------------
-def generate_avatar_video(script_text):
+# ------------------ STEP 2: Pick Today's Avatar and Voice -------------------
+def get_today_avatar_and_voice():
+    today = datetime.now().weekday()  # Monday=0, Sunday=6
+    avatar_voice = AVATAR_VOICE_PAIRS[today % len(AVATAR_VOICE_PAIRS)]
+    print(f"🎭 Today's avatar: {avatar_voice['name']}")
+    print(f"🗣️ Today's voice ID: {avatar_voice['voice_id']}")
+    return avatar_voice["avatar_id"], avatar_voice["voice_id"]
+
+# ------------------ STEP 3: Generate Avatar Video -------------------
+def generate_avatar_video(script_text, avatar_id, voice_id):
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
         "X-Api-Key": HEYGEN_API_KEY,
@@ -31,13 +67,13 @@ def generate_avatar_video(script_text):
             {
                 "character": {
                     "type": "avatar",
-                    "avatar_id": AVATAR_ID,
+                    "avatar_id": avatar_id,
                     "avatar_style": "normal"
                 },
                 "voice": {
                     "type": "text",
                     "input_text": script_text,
-                    "voice_id": VOICE_ID,
+                    "voice_id": voice_id,
                     "speed": SPEAK_SPEED
                 }
             }
@@ -72,7 +108,7 @@ def wait_for_video_ready(video_id):
         print("⏳ Waiting for video to finish rendering...")
         time.sleep(10)
 
-# ------------------ STEP 3: Download Video -------------------
+# ------------------ STEP 4: Download Video -------------------
 def download_video(video_url, output_path=AVATAR_OUTPUT):
     r = requests.get(video_url)
     with open(output_path, 'wb') as f:
@@ -85,5 +121,6 @@ if __name__ == "__main__":
         raise ValueError("❌ Missing HEYGEN_API_KEY environment variable")
     
     script_text = read_script(SCRIPT_FILE)
-    avatar_video_url = generate_avatar_video(script_text)
+    today_avatar, today_voice = get_today_avatar_and_voice()
+    avatar_video_url = generate_avatar_video(script_text, today_avatar, today_voice)
     download_video(avatar_video_url)
