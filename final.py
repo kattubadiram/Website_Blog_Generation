@@ -74,8 +74,10 @@ def generate_blog(market_summary: str):
 
 def save_local(blog: str, summary: str):
     try:
-        with open("blog_summary.txt", "w") as f: f.write(summary)
-        with open("blog_post.txt", "w") as f: f.write(blog + "\n\n" + summary)
+        with open("blog_summary.txt", "w") as f:
+            f.write(summary)
+        with open("blog_post.txt", "w") as f:
+            f.write(blog + "\n\n" + summary)
         print("📝 Saved locally")
     except IOError as e:
         print(f"❌ Failed to save local files: {e}")
@@ -170,6 +172,7 @@ if __name__ == "__main__":
         )
 
         post_body = (
+            f'{header_html}'
             f'<div>{blog_text}</div>'
         )
 
