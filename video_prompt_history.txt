@@ -98,3 +98,8 @@ VOICEOVER SCRIPT — 2025-04-27 08:43:58
 ================================================================================
 Good afternoon. U.S. markets rallied today, with the Nasdaq leading the charge, up 1.26%. The S&P 500 and Dow also posted gains, as the VIX fell, signaling lower volatility. Internationally, the Nikkei surged, while the Shanghai Composite dipped. Bond yields declined, reflecting strong demand for safe assets, and the U.S. dollar strengthened. In commodities, oil prices rose, but precious metals fell. Notably, Tesla soared 10%, while Intel faced a 6.7% drop due to outlook concerns.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-28 18:13:41
+================================================================================
+Good afternoon. The stock market faced broad declines today, with the Nasdaq down 0.91% and the S&P 500 falling 0.57%. Increased volatility was marked by a 5% rise in the VIX. Bond yields dipped as investors shifted to safer assets, while the dollar weakened. In commodities, natural gas surged over 7% and gold rose 1.46%, but oil prices fell. Technology stocks struggled, led by NVIDIA's 3.72% drop, though Boeing gained 2.21%, supporting industrials. Overall, caution prevails as investors seek defensive positions amid ongoing uncertainty.
+
