@@ -39,6 +39,11 @@ AVATAR_VOICE_PAIRS = [
         "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
         "name": "Aubrey"
     },
+    {
+        "avatar_id": "Piper_sitting_businesssofa_front",
+        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Piper - Lifelike
+        "name": "Piper Business Sofa Front"
+    }
 ]
 
 # ------------------ STEP 1: Read Script -------------------
