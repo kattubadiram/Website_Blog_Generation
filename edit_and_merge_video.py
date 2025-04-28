@@ -1,11 +1,13 @@
 import os
+import numpy as np
 from datetime import datetime
-from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip, TextClip
+from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
+from PIL import Image, ImageDraw, ImageFont
 
 # ------------ CONFIG ------------
 AVATAR_VIDEO = 'avatar_video.mp4'
-IMAGES_FOLDER = 'ai_images/'   # ✅ Updated folder
-FINAL_VIDEO = 'video_output.mp4'  # ✅ Updated output name
+IMAGES_FOLDER = 'ai_images/'   # Folder with images
+FINAL_VIDEO = 'video_output.mp4'
 
 FRAME_RATE = 24
 PORTRAIT_WIDTH = 720
@@ -14,6 +16,23 @@ PORTRAIT_HEIGHT = 1280
 SHOW_IMAGE_EVERY = 6
 IMAGE_DURATION = 3
 IMAGE_FADE = 0.5
+
+def create_text_overlay(text, width, height):
+    img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Use a common font available on Linux runners
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    font_size = 24
+    font = ImageFont.truetype(font_path, font_size)
+
+    text_width, text_height = draw.textsize(text, font=font)
+    x = width - text_width - 20  # 20px right margin
+    y = 20  # 20px top margin
+
+    draw.text((x, y), text, font=font, fill=(255, 255, 255, 255))  # White text
+
+    return np.array(img)
 
 def create_overlay_cutaway_video():
     avatar_clip = VideoFileClip(AVATAR_VIDEO).resize(width=PORTRAIT_WIDTH)
@@ -43,19 +62,18 @@ def create_overlay_cutaway_video():
         )
         overlays.append(img_clip)
 
-    # ➡️ Add date, day, time text
+    # ➡️ Add datetime text overlay
     now = datetime.now()
-    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p")  # Example: Monday, April 29, 2025 03:15 PM
+    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p")
 
-    text_clip = (
-        TextClip(datetime_text, fontsize=24, color='white', bg_color='black', font="Arial-Bold")
-        .set_position(("right", "top"))  # Top right corner
+    text_image_array = create_text_overlay(datetime_text, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
+    text_image_clip = (
+        ImageClip(text_image_array, ismask=False)
         .set_duration(avatar_duration)
-        .margin(right=10, top=10, opacity=0)  # Small margin from edges
     )
 
     final = CompositeVideoClip(
-        [avatar_clip, text_clip] + overlays,
+        [avatar_clip, text_image_clip] + overlays,
         size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
     ).set_audio(avatar_clip.audio)
 
