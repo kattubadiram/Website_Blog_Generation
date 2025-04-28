@@ -103,3 +103,8 @@ VOICEOVER SCRIPT — 2025-04-28 18:13:41
 ================================================================================
 Good afternoon. The stock market faced broad declines today, with the Nasdaq down 0.91% and the S&P 500 falling 0.57%. Increased volatility was marked by a 5% rise in the VIX. Bond yields dipped as investors shifted to safer assets, while the dollar weakened. In commodities, natural gas surged over 7% and gold rose 1.46%, but oil prices fell. Technology stocks struggled, led by NVIDIA's 3.72% drop, though Boeing gained 2.21%, supporting industrials. Overall, caution prevails as investors seek defensive positions amid ongoing uncertainty.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-28 22:50:56
+================================================================================
+Good morning. The Dow Jones led U.S. markets with a 0.28% gain, boosted by Boeing's 2.44% rise. In contrast, the NASDAQ slipped 0.1%, weighed down by a 2% drop in NVIDIA. Internationally, Germany's DAX and Japan's Nikkei posted modest gains. In commodities, natural gas rose while oil prices eased. Bond yields fell, with the 10-year Treasury down 1.17%. Currency markets saw a stronger euro, while the U.S. Dollar Index dipped 0.53%.
+
