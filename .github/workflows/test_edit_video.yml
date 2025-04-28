@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python environment and install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg imagemagick libjpeg-dev zlib1g-dev libfreetype6-dev
+          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev python3-pil
           python3 -m venv .venv
 
       - name: Install Python dependencies
