@@ -1,0 +1,56 @@
+name: Save and Upload Video Only
+
+on:
+  workflow_dispatch:  # Manually triggered from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  save-upload-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set up Python environment
+        run: |
+          sudo apt-get update
+          python3 -m venv .venv
+
+      - name: Install Python dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools
+          .venv/bin/pip install requests python-dotenv google-auth google-auth-oauthlib google-api-python-client
+
+      # 1️⃣ Save generated final video to GitHub
+      - name: Save generated final video
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add video_output.mp4
+          git commit -m "Save generated video_output.mp4 [skip ci]" || echo "No video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git pull --rebase origin main
+          git push
+
+      # 2️⃣ Upload video to WordPress
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      # 3️⃣ Restore YouTube token
+      - name: Restore YouTube token
+        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
+        env:
+          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN }}
+
+      # 4️⃣ Upload video to YouTube Shorts
+      - name: Upload video to YouTube Shorts
+        run: .venv/bin/python upload_to_youtube.py
