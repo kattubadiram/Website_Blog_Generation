@@ -14,10 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python environment
+      - name: Set up Python environment and install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
+          sudo apt-get install -y ffmpeg imagemagick libjpeg-dev zlib1g-dev libfreetype6-dev
           python3 -m venv .venv
 
       - name: Install Python dependencies
@@ -28,7 +28,9 @@ jobs:
             ffmpeg-python
 
       - name: Run edit_and_merge_video.py
-        run: .venv/bin/python edit_and_merge_video.py
+        run: |
+          . .venv/bin/activate
+          python edit_and_merge_video.py
 
       - name: Commit and push generated video
         run: |
