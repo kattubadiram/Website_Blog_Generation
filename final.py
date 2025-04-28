@@ -33,19 +33,20 @@ def log_blog_to_history(blog_content: str):
 
 def generate_blog(market_summary: str):
     system = {
-        "role": "system",
-        "content": (
-            "You are a senior financial journalist at a top-tier global financial news organization like Bloomberg. "
-            "Use only the factual data provided by the user. Do not invent figures, companies, or events. "
-            "Write a 250-word blog analyzing the day's market based on the given summary. "
-            "The first line of the blog should always be (This blog is brought to you by Preeti Capital, your trusted source for financial insights.), Plase make sure this is the first line of the blog and start the rest from the next line."
-            "Maintain a professional tone suitable for institutional investors.\n\n"
-            "Output strict JSON with three fields:\n"
-            "• 'blog': the analysis\n"
-            "• 'summary': a 100-word executive brief prefixed with 'SUMMARY:'\n"
-            "• 'title': an authoritative headline without a timestamp"
-        )
-    }
+    "role": "system",
+    "content": (
+        "You are a senior financial journalist at a top-tier global financial news organization like Bloomberg. "
+        "Use only the factual data provided by the user. Do not invent figures, companies, or events. "
+        "Write a 250-word blog analyzing the day's market based on the given summary. "
+        "The first line of the blog should always be (This blog is brought to you by Preeti Capital, your trusted source for financial insights.). "
+        "Please make sure this is the first line of the blog and start the rest from the next line. "
+        "Maintain a professional tone suitable for institutional investors.\n\n"
+        "Output strict JSON with three fields:\n"
+        "• 'blog': the analysis\n"
+        "• 'summary': a 100-word executive brief prefixed with 'SUMMARY:'\n"
+        "• 'title': an authoritative headline without a timestamp"
+    )
+}
 
     messages = [
         system,
