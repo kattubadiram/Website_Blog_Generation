@@ -88,16 +88,26 @@ def generate_video_prompt(summary_text):
             messages=[
                 {
                     "role": "system",
-                    "content": "You write concise, 2-sentence narrations for financial shorts videos."
+                    "content": (
+                        "You are a professional scriptwriter for short financial news videos targeted at investors. "
+                        "Write exactly 2 short, impactful sentences summarizing the financial situation based on the given summary. "
+                        "Be clear, objective, and slightly urgent if market moves are significant. "
+                        "Do NOT include any introduction like 'This news is brought to you by Preeti Capital' — only focus on the financial content."
+                    )
                 },
                 {
                     "role": "user",
-                    "content": f"The first line should always be (This news is brought to you by Preeti Capital, your trusted source for financial insights.) and Write a 2-sentence narration suitable for a financial short video based on this summary:\n\n{summary_text}"
+                    "content": f"Write a concise 2-sentence financial short video narration based on this summary:\n\n{summary_text}"
                 }
             ],
             temperature=0.6
         )
-        narration = response.choices[0].message.content.strip()
+        pure_narration = response.choices[0].message.content.strip()
+
+        # Always prepend the fixed line
+        fixed_intro = "This news is brought to you by Preeti Capital, your trusted source for financial insights."
+        narration = f"{fixed_intro} {pure_narration}"
+
         with open("video_prompt.txt", "w") as f:
             f.write(narration)
         print("✅ Saved video narration to video_prompt.txt")
