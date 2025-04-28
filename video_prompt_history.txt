@@ -108,3 +108,8 @@ VOICEOVER SCRIPT — 2025-04-28 22:50:56
 ================================================================================
 Good morning. The Dow Jones led U.S. markets with a 0.28% gain, boosted by Boeing's 2.44% rise. In contrast, the NASDAQ slipped 0.1%, weighed down by a 2% drop in NVIDIA. Internationally, Germany's DAX and Japan's Nikkei posted modest gains. In commodities, natural gas rose while oil prices eased. Bond yields fell, with the 10-year Treasury down 1.17%. Currency markets saw a stronger euro, while the U.S. Dollar Index dipped 0.53%.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-28 23:40:01
+================================================================================
+Good evening. The markets closed today with mixed results. The Dow Jones gained 0.28%, while the Nasdaq dipped 0.10%. European indices also saw modest gains, and Japan's Nikkei 225 rose by 0.38%. Bond yields fell, signaling a risk-averse sentiment, with the 10-year Treasury yield down 1.17%. In commodities, natural gas climbed 0.38%, but oil prices slipped. Energy stocks led the day, up 0.70%, while technology struggled, reflecting investor caution amid ongoing geopolitical and economic uncertainties.
+
