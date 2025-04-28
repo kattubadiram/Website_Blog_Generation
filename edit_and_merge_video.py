@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
 from PIL import Image, ImageDraw, ImageFont
 
@@ -62,9 +63,9 @@ def create_overlay_cutaway_video():
         )
         overlays.append(img_clip)
 
-    # ➡️ Add datetime text overlay
-    now = datetime.now()
-    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p")
+    # ➡️ Add datetime text overlay with Eastern Time
+    now = datetime.now(ZoneInfo("America/New_York"))
+    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p ET")  # Added 'ET' for clarity
 
     text_image_array = create_text_overlay(datetime_text, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
     text_image_clip = (
