@@ -59,12 +59,12 @@ def embed_video(video_url):
 
         # Append styled vertical video embed
         embed_html = f"""
-<div style="text-align: center;">
-  <video controls playsinline style="max-width: 360px; width: 100%; height: auto;">
-    <source src="{video_url}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <video controls playsinline style="max-width: 320px; width: 100%; height: auto; border-radius: 8px;">
+        <source src="{video_url}" type="video/mp4">
+        Your browser does not support the video tag.
+        </video>
+        </div>
 """
         new_content = f"{content}\n\n{embed_html.strip()}"
         payload = {"content": new_content}
