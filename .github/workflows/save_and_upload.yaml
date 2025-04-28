@@ -44,13 +44,3 @@ jobs:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
-      # 3️⃣ Restore YouTube token
-      - name: Restore YouTube token
-        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
-        env:
-          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN }}
-
-      # 4️⃣ Upload video to YouTube Shorts
-      - name: Upload video to YouTube Shorts
-        run: .venv/bin/python upload_to_youtube.py
