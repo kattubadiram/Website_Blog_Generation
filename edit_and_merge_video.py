@@ -1,5 +1,6 @@
 import os
-from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
+from datetime import datetime
+from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip, TextClip
 
 # ------------ CONFIG ------------
 AVATAR_VIDEO = 'avatar_video.mp4'
@@ -42,8 +43,19 @@ def create_overlay_cutaway_video():
         )
         overlays.append(img_clip)
 
+    # ➡️ Add date, day, time text
+    now = datetime.now()
+    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p")  # Example: Monday, April 29, 2025 03:15 PM
+
+    text_clip = (
+        TextClip(datetime_text, fontsize=24, color='white', bg_color='black', font="Arial-Bold")
+        .set_position(("right", "top"))  # Top right corner
+        .set_duration(avatar_duration)
+        .margin(right=10, top=10, opacity=0)  # Small margin from edges
+    )
+
     final = CompositeVideoClip(
-        [avatar_clip] + overlays,
+        [avatar_clip, text_clip] + overlays,
         size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
     ).set_audio(avatar_clip.audio)
 
