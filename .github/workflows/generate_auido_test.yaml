@@ -1,0 +1,74 @@
+name: Post Blog to WordPress
+
+on:
+  schedule:
+    - cron: "30 8 * * *"  # Daily at 1:00 PM EDT / 10:00 AM MST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  post-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set up Python environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
+          python3 -m venv .venv
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/generate_video_heygen.py', '**/edit_and_merge_video.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools
+          .venv/bin/pip install --no-cache-dir \
+            pytz requests python-dotenv openai>=1.0.0 \
+            ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
+            moviepy==1.0.3 yfinance feedparser \
+            google-cloud-texttospeech gtts
+
+      # 🔐 Write Google credentials to file
+      - name: Write Google credentials to file
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+
+      - name: Verify Google Cloud credentials
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('✅ Google Cloud authentication works')"
+
+      - name: Generate blog voiceover (Wavenet)
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python generate_audio_from_blog.py
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
+
+      - name: Upload blog audio to WordPress
+        run: .venv/bin/python upload_audio_and_embed.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
