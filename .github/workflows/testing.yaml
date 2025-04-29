@@ -1,4 +1,4 @@
-name: Post Blog to WordPress
+name: Test
 
 on:
   schedule:
