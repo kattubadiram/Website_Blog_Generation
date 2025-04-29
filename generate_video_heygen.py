@@ -20,13 +20,13 @@ AVATAR_VOICE_PAIRS = [
         "name": "Gala"
     },
     {
-        "avatar_id": "Piper_sitting_businesssofa_side",
-        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Piper - Lifelike
+        "avatar_id": "Masha Office Front", 
+        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Piper - Lifelike 
         "name": "Piper Business Sofa Front"
     },
     {
-        "avatar_id": "Masha Office Front",
-        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Masha - Lifelike
+        "avatar_id": "Piper_sitting_businesssofa_side",
+        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Masha - Lifelike
         "name": "Masha"
     },
     {
