@@ -1,3 +1,5 @@
+# .github/workflows/main.yml
+
 name: Post Blog to WordPress
 
 on:
@@ -42,10 +44,7 @@ jobs:
             google-cloud-texttospeech gtts
 
       - name: Verify ffmpeg-python is importable
-        run: .venv/bin/python - << 'EOF'
-import ffmpeg
-print("✅ ffmpeg-python works")
-EOF
+        run: .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
 
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
@@ -67,10 +66,10 @@ EOF
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python - << 'EOF'
-from google.cloud import texttospeech
-client = texttospeech.TextToSpeechClient()
-print("✅ Google Cloud authentication works")
-EOF
+          from google.cloud import texttospeech
+          client = texttospeech.TextToSpeechClient()
+          print("✅ Google Cloud authentication works")
+          EOF
 
       - name: Generate blog voiceover (Wavenet)
         run: |
