@@ -113,3 +113,10 @@ VOICEOVER SCRIPT — 2025-04-28 23:40:01
 ================================================================================
 Good evening. The markets closed today with mixed results. The Dow Jones gained 0.28%, while the Nasdaq dipped 0.10%. European indices also saw modest gains, and Japan's Nikkei 225 rose by 0.38%. Bond yields fell, signaling a risk-averse sentiment, with the 10-year Treasury yield down 1.17%. In commodities, natural gas climbed 0.38%, but oil prices slipped. Energy stocks led the day, up 0.70%, while technology struggled, reflecting investor caution amid ongoing geopolitical and economic uncertainties.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-29 01:37:21
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Today, markets showed mixed results: the Dow Jones and Russell 2000 gained, while the Nasdaq dipped slightly. The VIX index rose, signaling increased volatility. Bond yields fell, indicating a flight to safety. In currencies, the U.S. dollar strengthened against the euro and pound. Commodities struggled, with gold and crude oil down, but natural gas prices rose. Notably, Boeing and Intel led the way in stock gains, while Nvidia faced losses.
+
