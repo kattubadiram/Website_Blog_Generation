@@ -163,7 +163,32 @@ AVATAR_VOICE_PAIRS = [
         "avatar_id": "Darnell_Blue_Shirt_Left",
         "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
         "name": "Darnell"
-    }
+    },
+     {
+        "avatar_id": "Emanuel_sitting_sofa_front",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Emanuel"
+    },
+    {
+        "avatar_id": "Fernando_sitting_outdoorchair_front_close",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Fernando"
+    },
+    {
+        "avatar_id": "Florin_Maintain_Siiting_Front_public",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Florin"
+    },
+    {
+        "avatar_id": "Francis_in_Shirt_Left",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Francis"
+    },
+    {
+        "avatar_id": "Gerardo_sitting_sofa_side",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Gerardo"
+    }  
 ]
 
 # ------------------ STEP 1: Read Script -------------------
