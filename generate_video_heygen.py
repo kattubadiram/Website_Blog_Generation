@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import random
 from datetime import datetime
 
 # ------------------ CONFIG -------------------
@@ -20,29 +21,104 @@ AVATAR_VOICE_PAIRS = [
         "name": "Gala"
     },
     {
-        "avatar_id": "Masha_sitting_office_front", 
-        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Piper - Lifelike 
-        "name": "Piper Business Sofa Front"
-    },
-    {
-        "avatar_id": "Piper_sitting_businesssofa_side",
-        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Masha - Lifelike
+        "avatar_id": "Masha_standing_office_front",
+        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Masha - Lifelike
         "name": "Masha"
     },
     {
         "avatar_id": "Georgia_expressive_2024112701",
-        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Georgia (Sabine matching voice)
         "name": "Georgia (Upper Body)"
     },
     {
         "avatar_id": "Georgia_standing_casual_side",
-        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Georgia Office
         "name": "Georgia Office Front"
     },
     {
-        "avatar_id": "June_HR_public",
+        "avatar_id": "Adriana_BizTalk_Front_public",
         "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
-        "name": "Aubrey"
+        "name": "Adriana"
+    },
+    {
+        "avatar_id": "Amanda_in_Blue_Shirt_Front",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Amanda"
+    },
+    {
+        "avatar_id": "Amelia_standing_business_training_front",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Amelia"
+    },
+    {
+        "avatar_id": "Annie_expressive2_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Annie"
+    },
+    {
+        "avatar_id": "Carlotta_Business_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Carlotta"
+    },
+    {
+        "avatar_id": "Caroline_Business_Sitting_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Caroline"
+    },
+    {
+        "avatar_id": "Chloe_standing_lounge_side",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Chloe"
+    },
+    {
+        "avatar_id": "Violante_Business_Sitting_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Violante"
+    },
+    {
+        "avatar_id": "Elenora_Casual_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Elenora"
+    },
+    {
+        "avatar_id": "Fina_Casual_Side_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Fina"
+    },
+    {
+        "avatar_id": "Jin_Suit_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Jin"
+    },
+    {
+        "avatar_id": "Yola_Casual_Side_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Yola"
+    },
+    {
+        "avatar_id": "Zara_Business_Sitting_Front_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Zara"
+    },
+    {
+        "avatar_id": "Artur_sitting_office_front",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Artur"
+    },
+    {
+        "avatar_id": "Berat_standing_office_side",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Berat"
+    },
+    {
+        "avatar_id": "Bojan_standing_businesstraining_side",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Bojan"
+    },
+    {
+        "avatar_id": "Brandon_Business_Sitting_Front_public",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Brandon"
     }
 ]
 
@@ -52,12 +128,12 @@ def read_script(script_file):
         return f.read()
 
 # ------------------ STEP 2: Pick Today's Avatar and Voice -------------------
-def get_today_avatar_and_voice():
-    today = datetime.now().weekday()  # Monday=0, Sunday=6
-    avatar_voice = AVATAR_VOICE_PAIRS[today % len(AVATAR_VOICE_PAIRS)]
-    print(f"🎭 Today's avatar: {avatar_voice['name']}")
-    print(f"🗣️ Today's voice ID: {avatar_voice['voice_id']}")
-    return avatar_voice["avatar_id"], avatar_voice["voice_id"]
+def get_random_avatar_and_voice():
+    avatar_voice = random.choice(AVATAR_VOICE_PAIRS)
+    print(f"🎭 Selected avatar: {avatar_voice['name']}")
+    print(f"🧍 Avatar ID: {avatar_voice['avatar_id']}")
+    print(f"🗣️ Voice ID: {avatar_voice['voice_id']}")
+    return avatar_voice["avatar_id"], avatar_voice["voice_id"], avatar_voice["name"]
 
 # ------------------ STEP 3: Generate Avatar Video -------------------
 def generate_avatar_video(script_text, avatar_id, voice_id):
@@ -126,6 +202,6 @@ if __name__ == "__main__":
         raise ValueError("❌ Missing HEYGEN_API_KEY environment variable")
     
     script_text = read_script(SCRIPT_FILE)
-    today_avatar, today_voice = get_today_avatar_and_voice()
+    today_avatar, today_voice, today_name = get_random_avatar_and_voice()
     avatar_video_url = generate_avatar_video(script_text, today_avatar, today_voice)
     download_video(avatar_video_url)
