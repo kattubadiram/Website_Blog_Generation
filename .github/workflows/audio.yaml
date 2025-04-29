@@ -1,4 +1,4 @@
-name: Post Blog to WordPress
+name: audio test
 
 on:
   schedule:
