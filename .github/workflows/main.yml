@@ -58,9 +58,7 @@ jobs:
           WP_SITE_URL:      ${{ secrets.WP_SITE_URL }}
 
       - name: Write Google credentials to file
-        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
-        env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > google-credentials.json
 
       - name: Verify Google Cloud credentials
         run: |
@@ -86,6 +84,7 @@ jobs:
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
       - name: Debug: show audio URL
+        continue-on-error: true
         run: |
           echo "Audio URL file contains:"
           cat latest_audio_url.txt || echo "(file not found)"
@@ -149,9 +148,7 @@ jobs:
         run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
 
       - name: Restore YouTube token
-        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
-        env:
-          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN }}
+        run: echo "${{ secrets.YOUTUBE_TOKEN_B64 }}" | base64 -d > youtube_token.pkl
 
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
