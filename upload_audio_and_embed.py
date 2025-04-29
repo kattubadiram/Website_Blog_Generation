@@ -3,11 +3,11 @@ import requests
 import re
 from dotenv import load_dotenv
 
-# Load environment variables
+# ——— Load environment variables —————————————————————————————
 load_dotenv()
-WP_USERNAME = os.getenv("WP_USERNAME")
+WP_USERNAME     = os.getenv("WP_USERNAME")
 WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL = os.getenv("WP_SITE_URL")
+WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 # Step 1: Upload MP3 to WordPress Media Library
 def upload_audio_to_wp(file_path):
@@ -19,16 +19,26 @@ def upload_audio_to_wp(file_path):
         media_url = f"{WP_SITE_URL}/wp-json/wp/v2/media"
         filename = os.path.basename(file_path)
         headers = {
-            'Content-Disposition': f'attachment; filename={filename}',
-            'Content-Type': 'audio/mpeg'
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "audio/mpeg"
         }
-        with open(file_path, 'rb') as f:
-            response = requests.post(media_url, headers=headers, data=f, auth=(WP_USERNAME, WP_APP_PASSWORD))
-        
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                media_url,
+                headers=headers,
+                data=f,
+                auth=(WP_USERNAME, WP_APP_PASSWORD)
+            )
         response.raise_for_status()
         audio_url = response.json()["source_url"]
         print("✅ Uploaded to media:", audio_url)
+
+        # ——— NEW: persist the URL for the video embed step ——————————————————
+        with open("latest_audio_url.txt", "w", encoding="utf-8") as ff:
+            ff.write(audio_url)
+
         return audio_url
+
     except Exception as e:
         print(f"❌ Failed to upload audio: {e}")
         return None
@@ -65,58 +75,54 @@ def embed_audio_in_latest_post(audio_url):
                 current_content = "<p>Financial market update.</p>"
         
         # Create audio embed HTML with introduction text
-        audio_embed = '<p><strong>Prefer to listen? Here\'s an audio version of this article:</strong></p>'
-        audio_embed += f'<p><audio controls><source src="{audio_url}" type="audio/mpeg">Your browser does not support the audio element.</audio></p>'
+        audio_embed = (
+            '<p><strong>Prefer to listen? Here\'s an audio version of this article:</strong></p>'
+            f'<p><audio controls><source src="{audio_url}" type="audio/mpeg">Your browser does not support the audio element.</audio></p>'
+        )
         
         # Find the position after the title (h1)
-        # This pattern looks for the closing </h1> tag
-        title_pattern = r'</h1>'
+        title_pattern = r"</h1>"
         match = re.search(title_pattern, current_content)
         
         if match:
-            # Insert audio player right after the </h1> tag
             insert_position = match.end()
-            updated_content = current_content[:insert_position] + "\n\n" + audio_embed + "\n\n" + current_content[insert_position:]
+            updated_content = (
+                current_content[:insert_position]
+                + "\n\n"
+                + audio_embed
+                + "\n\n"
+                + current_content[insert_position:]
+            )
             print("🎯 Inserting audio after the title (h1 tag)")
         else:
-            # Fallback - insert after the header div if title not found
-            header_div_pattern = r'</div>\s*</div>\s*</div>'
-            match = re.search(header_div_pattern, current_content)
-            
-            if match:
-                insert_position = match.end()
-                updated_content = current_content[:insert_position] + "\n\n" + audio_embed + "\n\n" + current_content[insert_position:]
-                print("🎯 Inserting audio after the header div")
-            else:
-                # Last resort - insert at the beginning
-                updated_content = audio_embed + "\n\n" + current_content
-                print("⚠️ Could not find title or header position, adding audio at the beginning")
+            # Fallback - insert at beginning
+            updated_content = audio_embed + "\n\n" + current_content
+            print("⚠️ Could not find title tag, adding audio at the beginning")
         
         # Update the post
         update_payload = {"content": updated_content}
         update_url = f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}"
-        update_response = requests.post(update_url, json=update_payload, auth=(WP_USERNAME, WP_APP_PASSWORD))
+        update_response = requests.post(
+            update_url,
+            json=update_payload,
+            auth=(WP_USERNAME, WP_APP_PASSWORD)
+        )
         update_response.raise_for_status()
         print(f"🔗 Audio embedded in post ID {post_id}")
         return True
+
     except Exception as e:
         print(f"❌ Failed to embed audio: {e}")
         return False
 
-# Main execution
+# ——— Main execution ————————————————————————————————
 if __name__ == "__main__":
-    try:
-        print("Starting audio upload process...")
-        mp3_path = "blog_voiceover.mp3"
-        mp3_url = upload_audio_to_wp(mp3_path)
-        
-        if mp3_url:
-            success = embed_audio_in_latest_post(mp3_url)
-            if success:
-                print("✅ Audio successfully uploaded and embedded")
-            else:
-                print("⚠️ Failed to embed audio, but upload was successful")
-        else:
-            print("⚠️ Process completed with errors")
-    except Exception as e:
-        print(f"❌ Unexpected error in main process: {e}")
+    print("▶️ Starting upload_audio_and_embed.py")
+    mp3_path = "blog_voiceover.mp3"
+    mp3_url = upload_audio_to_wp(mp3_path)
+    
+    if mp3_url:
+        success = embed_audio_in_latest_post(mp3_url)
+        print("✅ Audio successfully uploaded and embedded" if success else "⚠️ Failed to embed audio")
+    else:
+        print("⚠️ Process completed with errors")
