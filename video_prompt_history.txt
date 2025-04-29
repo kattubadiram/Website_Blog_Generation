@@ -127,3 +127,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 In today's market, the Dow Jones Industrial Average rose 0.28%, led by strong performances in industrials and financials. Meanwhile, the Nasdaq Composite dipped 0.10%, impacted by Nvidia's decline. Small-cap stocks also thrived, with the Russell 2000 up 0.41%. Bond yields fell, suggesting a flight to safety, while the dollar gained ground. Mixed results in commodities saw oil prices drop, but natural gas climbed. Notably, energy and healthcare sectors remained resilient amid increased market volatility, highlighted by a rise in the VIX.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-29 01:54:35
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+In today's market, the Dow Jones led with a modest gain of 0.28%, while the Nasdaq slipped by 0.096%. Small-cap stocks showed strength, but the VIX rose, signaling increased market uncertainty. Bond yields fell, with the 10-year Treasury down 1.17%. The US dollar strengthened slightly amidst mixed commodity prices. Notable stock movements included Boeing and Intel, both up over 2%, while Nvidia and Schlumberger faced declines. The tech sector lagged, as reflected in the dip of the Technology Select Sector SPDR Fund.
+
