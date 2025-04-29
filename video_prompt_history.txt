@@ -120,3 +120,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Today, markets showed mixed results: the Dow Jones and Russell 2000 gained, while the Nasdaq dipped slightly. The VIX index rose, signaling increased volatility. Bond yields fell, indicating a flight to safety. In currencies, the U.S. dollar strengthened against the euro and pound. Commodities struggled, with gold and crude oil down, but natural gas prices rose. Notably, Boeing and Intel led the way in stock gains, while Nvidia faced losses.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-04-29 01:46:10
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+In today's market, the Dow Jones Industrial Average rose 0.28%, led by strong performances in industrials and financials. Meanwhile, the Nasdaq Composite dipped 0.10%, impacted by Nvidia's decline. Small-cap stocks also thrived, with the Russell 2000 up 0.41%. Bond yields fell, suggesting a flight to safety, while the dollar gained ground. Mixed results in commodities saw oil prices drop, but natural gas climbed. Notably, energy and healthcare sectors remained resilient amid increased market volatility, highlighted by a rise in the VIX.
+
