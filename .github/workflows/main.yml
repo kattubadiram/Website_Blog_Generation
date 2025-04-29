@@ -1,5 +1,3 @@
-# .github/workflows/main.yml
-
 name: Post Blog to WordPress
 
 on:
@@ -46,28 +44,29 @@ jobs:
       - name: Verify ffmpeg-python is importable
         run: .venv/bin/python -c "import ffmpeg; print('✅ ffmpeg-python works')"
 
+      # 🆕 Market data fetch + log
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
 
+      # 1️⃣ Blog generation using final.py
       - name: Run blog and summary generator
         run: .venv/bin/python final.py
         env:
-          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
-          WP_USERNAME:      ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD:  ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:      ${{ secrets.WP_SITE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
+      # 🔐 Write Google credentials to file
       - name: Write Google credentials to file
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > google-credentials.json
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
 
       - name: Verify Google Cloud credentials
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python - << 'EOF'
-          from google.cloud import texttospeech
-          client = texttospeech.TextToSpeechClient()
-          print("✅ Google Cloud authentication works")
-          EOF
+          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('✅ Google Cloud authentication works')"
 
       - name: Generate blog voiceover (Wavenet)
         run: |
@@ -76,26 +75,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
 
-      - name: Upload blog audio to WordPress
-        run: .venv/bin/python upload_audio_and_embed.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
-      - name: Debug: show audio URL
-        continue-on-error: true
-        run: |
-          echo "Audio URL file contains:"
-          cat latest_audio_url.txt || echo "(file not found)"
-
-      - name: Upload video to WordPress
-        run: .venv/bin/python upload_video_to_wp.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
+      # 3️⃣ Video script + voiceover
       - name: Generate 20s video narration
         run: .venv/bin/python generate_video_prompt.py
         env:
@@ -108,6 +88,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: "$(pwd)/google-credentials.json"
 
+      # 4️⃣ Visuals from DALL·E
       - name: Generate visual prompts
         run: .venv/bin/python generate_visual_prompts.py
         env:
@@ -118,6 +99,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+      # 5️⃣ Generate avatar video using HeyGen API
       - name: Generate avatar video
         run: .venv/bin/python generate_video_heygen.py
         env:
@@ -132,6 +114,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
+      # 6️⃣ Edit avatar video with AI-generated images
       - name: Merge avatar video and overlay images
         run: .venv/bin/python edit_and_merge_video.py
 
@@ -144,15 +127,33 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
+      - name: Upload blog audio to WordPress
+        run: .venv/bin/python upload_audio_and_embed.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      # 7️⃣ YouTube integration
       - name: Install YouTube uploader dependencies
         run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
 
       - name: Restore YouTube token
-        run: echo "${{ secrets.YOUTUBE_TOKEN_B64 }}" | base64 -d > youtube_token.pkl
+        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
+        env:
+          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN }}
 
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
 
+      # 8️⃣ Save generated AI images to repo
       - name: Save AI-generated images to repo
         run: |
           git config --global user.name "GitHub Actions Bot"
@@ -162,6 +163,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
 
+      # 9️⃣ Commit history logs
       - name: Commit history logs
         if: success()
         run: |
