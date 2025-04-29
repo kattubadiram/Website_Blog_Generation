@@ -68,23 +68,23 @@ def embed_video(video_url, audio_url=None):
         title_html  = latest["title"]["rendered"]
         content_html= latest["content"]["rendered"]
 
-        # Build flex container
+        # Build flex container (improved layout)
         embed_parts = [
-            '<div style="display:flex; align-items:flex-start; gap:20px; margin-bottom:30px;">',
+            '<div style="display:flex; align-items:center; justify-content:center; gap:40px; margin-bottom:30px;">',
             '  <div style="flex:0 0 320px;">',
-            f'    <video controls playsinline style="width:100%; height:auto; border-radius:8px;">',
+            f'    <video controls playsinline style="width:100%; height:auto; border-radius:12px;">',
             f'      <source src="{video_url}" type="video/mp4">',
             '      Your browser does not support the video tag.',
             '    </video>',
             '  </div>',
-            '  <div style="flex:1; padding-left:20px;">',
-            f'    <h1 style="margin:0 0 10px; font-size:24px;">{title_html}</h1>',
+            '  <div style="flex:1; max-width:600px;">',
+            f'    <h1 style="margin:0 0 20px; font-size:28px; text-align:center;">{title_html}</h1>',
         ]
 
         if audio_url:
             embed_parts += [
-                '    <p><strong>Prefer to listen?</strong></p>',
-                '    <audio controls style="width:100%; margin-top:5px;">',
+                '    <p style="text-align:center;"><strong>Prefer to listen?</strong></p>',
+                '    <audio controls style="width:100%; margin-top:10px;">',
                 f'      <source src="{audio_url}" type="audio/mpeg">',
                 '      Your browser does not support the audio element.',
                 '    </audio>',
