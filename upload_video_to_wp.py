@@ -1,91 +1,121 @@
+# upload_video_to_wp.py
+
+import os
 import requests
 import base64
-import os
 from dotenv import load_dotenv
 
-# ——— Load credentials from .env ———————————————————————
+# ——— Load credentials ———————————————————————
 load_dotenv()
-WP_USERNAME = os.getenv("WP_USERNAME")
+WP_USERNAME     = os.getenv("WP_USERNAME")
 WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL = os.getenv("WP_SITE_URL")
-VIDEO_FILE = "video_output.mp4"
-VIDEO_TITLE = "AI-Generated Market News Video"
+WP_SITE_URL     = os.getenv("WP_SITE_URL")
+
+# ——— Load audio URL from file ———————————————————————
+AUDIO_FILE = "latest_audio_url.txt"
+AUDIO_URL = None
+if os.path.exists(AUDIO_FILE):
+    with open(AUDIO_FILE, "r", encoding="utf-8") as f:
+        AUDIO_URL = f.read().strip()
+    print(f"✅ Loaded audio URL: {AUDIO_URL}")
+else:
+    print("⚠️ No audio URL file found; continuing without audio.")
 
 # ——— Upload video to WordPress Media Library ——————————
 def upload_video():
     media_endpoint = f"{WP_SITE_URL}/wp-json/wp/v2/media"
-    auth = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
-
+    auth_header = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
     headers = {
-        "Authorization": f"Basic {auth}",
-        "Content-Disposition": f'attachment; filename="{VIDEO_FILE}"',
+        "Authorization": f"Basic {auth_header}",
+        "Content-Disposition": 'attachment; filename="video_output.mp4"',
         "Content-Type": "video/mp4"
     }
 
     try:
-        with open(VIDEO_FILE, "rb") as f:
-            response = requests.post(media_endpoint, headers=headers, data=f)
-
-        if response.status_code == 201:
-            video_url = response.json()["source_url"]
-            print(f"✅ Uploaded video to WordPress: {video_url}")
-            return video_url
-        else:
-            print(f"❌ Failed to upload video: {response.status_code} - {response.text}")
-            return None
+        with open("video_output.mp4", "rb") as f:
+            resp = requests.post(media_endpoint, headers=headers, data=f)
+        resp.raise_for_status()
+        video_url = resp.json().get("source_url")
+        print(f"✅ Uploaded video: {video_url}")
+        return video_url
     except Exception as e:
-        print(f"❌ Error opening video file: {e}")
+        print(f"❌ Video upload failed: {e}")
         return None
 
-# ——— Embed video into latest blog post ——————————————————
-def embed_video(video_url):
-    auth = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
+# ——— Embed video, title, and audio into latest blog post ——————————————————
+def embed_video(video_url, audio_url=None):
+    if not video_url:
+        print("❌ No video URL provided, cannot embed.")
+        return False
+
+    auth_header = base64.b64encode(f"{WP_USERNAME}:{WP_APP_PASSWORD}".encode()).decode()
     headers = {
-        "Authorization": f"Basic {auth}",
+        "Authorization": f"Basic {auth_header}",
         "Content-Type": "application/json"
     }
 
     try:
-        # Get most recent post
-        posts_resp = requests.get(f"{WP_SITE_URL}/wp-json/wp/v2/posts", headers=headers)
-        posts = posts_resp.json()
-
+        # Fetch latest post
+        resp = requests.get(f"{WP_SITE_URL}/wp-json/wp/v2/posts", headers=headers)
+        resp.raise_for_status()
+        posts = resp.json()
         if not posts:
             print("❌ No posts found.")
-            return
+            return False
 
-        post_id = posts[0]['id']
-        content = posts[0]['content']['rendered']
+        latest = posts[0]
+        post_id     = latest["id"]
+        title_html  = latest["title"]["rendered"]
+        content_html= latest["content"]["rendered"]
 
-        # Append styled vertical video embed
-        embed_html = f"""
-        <div style="display: flex; justify-content: flex-start; margin-bottom: 20px;">
-        <video controls playsinline style="max-width: 320px; width: 100%; height: auto; border-radius: 8px;">
-        <source src="{video_url}" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-"""
+        # Build flex container
+        embed_parts = [
+            '<div style="display:flex; align-items:flex-start; gap:20px; margin-bottom:30px;">',
+            '  <div style="flex:0 0 320px;">',
+            f'    <video controls playsinline style="width:100%; height:auto; border-radius:8px;">',
+            f'      <source src="{video_url}" type="video/mp4">',
+            '      Your browser does not support the video tag.',
+            '    </video>',
+            '  </div>',
+            '  <div style="flex:1; padding-left:20px;">',
+            f'    <h1 style="margin:0 0 10px; font-size:24px;">{title_html}</h1>',
+        ]
 
-        new_content = f"{embed_html.strip()}\n\n{content}"
-        payload = {"content": new_content}
+        if audio_url:
+            embed_parts += [
+                '    <p><strong>Prefer to listen?</strong></p>',
+                '    <audio controls style="width:100%; margin-top:5px;">',
+                f'      <source src="{audio_url}" type="audio/mpeg">',
+                '      Your browser does not support the audio element.',
+                '    </audio>',
+            ]
 
+        embed_parts += [
+            '  </div>',
+            '</div>'
+        ]
+        embed_html = "\n".join(embed_parts)
+
+        # Prepend to content
+        new_content = embed_html + "\n\n" + content_html
+
+        # Update post
         update_resp = requests.post(
             f"{WP_SITE_URL}/wp-json/wp/v2/posts/{post_id}",
             headers=headers,
-            json=payload
+            json={"content": new_content}
         )
-
-        if update_resp.status_code == 200:
-            print("✅ Video embedded successfully into the latest post.")
-        else:
-            print(f"❌ Failed to embed video: {update_resp.status_code} - {update_resp.text}")
+        update_resp.raise_for_status()
+        print("✅ Embedded video, title & audio successfully.")
+        return True
 
     except Exception as e:
-        print(f"❌ Error embedding video: {e}")
+        print(f"❌ Embedding failed: {e}")
+        return False
 
-# ——— Main ————————————————————————————————————————————————
+# ——— Main ———————————————————————————————————————————————
 if __name__ == "__main__":
-    video_url = upload_video()
-    if video_url:
-        embed_video(video_url)
+    print("▶️ Running upload_video_to_wp.py")
+    vid_url = upload_video()
+    result = embed_video(vid_url, AUDIO_URL)
+    print("✅ Done embedding media." if result else "⚠️ Done with errors.")
