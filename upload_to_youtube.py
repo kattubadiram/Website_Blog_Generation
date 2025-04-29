@@ -33,7 +33,7 @@ def upload_video():
     formatted_date = now_et.strftime("%A, %B %d, %Y")  # Example: Monday, April 28, 2025
 
     # ➡️ Final dynamic title
-    title = f"AI-Powered Market Recap for {formatted_date} #Shorts"
+    title = f"Market Recap for {formatted_date} "
 
     youtube = get_authenticated_service()
     media = MediaFileUpload(VIDEO_FILE, mimetype="video/mp4", resumable=True)
