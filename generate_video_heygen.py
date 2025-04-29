@@ -138,6 +138,31 @@ AVATAR_VOICE_PAIRS = [
         "avatar_id": "Brandon_Business_Sitting_Front_public",
         "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
         "name": "Brandon"
+    },
+    {
+        "avatar_id": "Brent_standing_sofa_side",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Brent"
+    },
+    {
+        "avatar_id": "Byron_Jacket_Side_public",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Byron"
+    },
+    {
+        "avatar_id": "Chad_in_Blue_Shirt_Left",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Chad"
+    },
+    {
+        "avatar_id": "Conrad_standing_house_front",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Conrad"
+    },
+    {
+        "avatar_id": "Darnell_Blue_Shirt_Left",
+        "voice_id": "e5f89518d5564535885cb6d674e57173",  # Aubrey - Lifelike
+        "name": "Darnell"
     }
 ]
 
