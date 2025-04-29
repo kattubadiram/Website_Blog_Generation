@@ -1,5 +1,3 @@
-# .github/workflows/main.yml
-
 name: Post Blog to WordPress
 
 on:
