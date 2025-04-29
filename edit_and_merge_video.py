@@ -52,6 +52,7 @@ def create_overlay_cutaway_video():
         img_path = os.path.join(IMAGES_FOLDER, img_file)
         img_clip = (
             ImageClip(img_path)
+            .resize((video_width, video_height))  # 👈 Match avatar video size exactly
             .set_start(time_sec)
             .set_duration(IMAGE_DURATION)
             .crossfadein(IMAGE_FADE)
@@ -61,7 +62,7 @@ def create_overlay_cutaway_video():
 
     # ➡️ Add datetime text overlay with Eastern Time
     now = datetime.now(ZoneInfo("America/New_York"))
-    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p ET")  # Added 'ET' for clarity
+    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p ET")  # Add 'ET' for clarity
 
     text_image_array = create_text_overlay(datetime_text, video_width, video_height)
     text_image_clip = (
