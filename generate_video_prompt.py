@@ -10,7 +10,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ——— Initialize OpenAI client —————————————————————————
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-# ——— Read the 100‑word blog summary ——————————————————————
+# ——— Read the 100-word blog summary ——————————————————————
 def read_summary():
     with open("blog_summary.txt", "r", encoding="utf-8") as file:
         return file.read().strip()
@@ -21,9 +21,12 @@ def ensure_file(path):
         with open(path, "w", encoding="utf-8"):
             pass
 
-# ——— Generate and save 20‑second voiceover script —————————————————
+# ——— Generate and save 20-second voiceover script —————————————————
 def generate_voiceover_script(summary: str) -> str:
     prompt_text = (
+        # enforce branded first line
+        "The script MUST begin with exactly the following line:\n"
+        "This news is brought to you by preethi capital, your trusted source for financial insights.\n\n"
         "You are a professional financial news writer. "
         "Using the following 100-word market summary, write a short voiceover script "
         "that sounds like a 20-second news segment. Use clear, concise, journalistic language. "
@@ -62,7 +65,7 @@ def generate_voiceover_script(summary: str) -> str:
     with open(latest_path, "w", encoding="utf-8") as f:
         f.write(voiceover_script)
 
-    print("\n✅ 20‑second voiceover script generated and saved.")
+    print("\n✅ 20-second voiceover script generated and saved.")
     return voiceover_script
 
 # ——— Main execution ————————————————————————————————
