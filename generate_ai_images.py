@@ -11,7 +11,7 @@ PROMPT_FOLDER = "visual_prompts"
 OUTPUT_FOLDER = "ai_images"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-MAX_IMAGES = 5  # 🔪 LIMIT TO FIRST N IMAGES TO REDUCE VIDEO LENGTH
+MAX_IMAGES = 7  # 🔪 LIMIT TO FIRST N IMAGES TO REDUCE VIDEO LENGTH
 
 def read_prompt(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
