@@ -14,18 +14,26 @@ WP_SITE_URL = os.getenv("WP_SITE_URL")
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_prompt_from_blog(blog_text):
-    """Generate a creative visual prompt from blog content using GPT-4."""
+    """Generate a deeply symbolic, context-driven poster prompt using GPT-4o."""
+    prompt_template = f"""
+You are an expert prompt engineer specializing in poster generation with DALL·E. 
+Your job is to extract the underlying sentiment and market context from the following financial blog and generate a modern, cinematic-style image prompt. Avoid referencing people unless essential. Prioritize:
+- Symbolism (e.g., red charts, coins, screens, scale, buildings)
+- Environment (e.g., trading floor, data center, lab, desk scene)
+- Lighting/mood (e.g., dim, dramatic, cold, energetic, warm)
+- Objects/labels (e.g., 'Dow +0.95%', 'UNH -2.16%', 'Gold ▼')
+
+Return a DALL·E 3–compatible image prompt that evokes the blog’s emotional tone and economic event.
+
+Blog Content:
+{blog_text}
+"""
+
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[
-            {
-                "role": "system",
-                "content": "You write creative visual prompts for DALL·E to generate blog posters."
-            },
-            {
-                "role": "user",
-                "content": f"Write a modern, visually engaging poster prompt for this blog content:\n\n{blog_text}"
-            }
+            {"role": "system", "content": "You generate cinematic DALL·E image prompts for blog posters."},
+            {"role": "user", "content": prompt_template}
         ],
         temperature=0.7
     )
@@ -80,17 +88,17 @@ def upload_image_to_wp(image_path):
 def fetch_and_upload_blog_poster(blog_text, output_path="blog_poster.png"):
     """End-to-end: Generate DALL·E image and upload to WordPress."""
     try:
-        print("🧠 Generating DALL·E prompt...")
+        print("🧠 Generating enhanced DALL·E prompt...")
         prompt = generate_prompt_from_blog(blog_text)
-        print(f"🎯 Prompt: {prompt}")
+        print(f"🎯 Generated Prompt:\n{prompt}\n")
 
         print("🎨 Generating poster image...")
         image_path = generate_dalle_image(prompt, output_path)
-        print(f"✅ Poster saved: {image_path}")
+        print(f"✅ Poster saved to: {image_path}")
 
-        print("☁️ Uploading to WordPress...")
+        print("☁️ Uploading image to WordPress...")
         media_info = upload_image_to_wp(image_path)
-        print("✅ Uploaded:", media_info.get("source_url"))
+        print("✅ Uploaded Successfully:", media_info.get("source_url"))
         return media_info
 
     except Exception as e:
