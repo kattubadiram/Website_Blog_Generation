@@ -45,20 +45,22 @@ def classify_sentiment(sentence):
         print(f"⚠️ Sentiment fallback: {e}")
         return "neutral"
 
-# ——— Steps 2–4: Generate visual prompt based on sentiment ———————————
+# ——— Step 2–4: Generate mood-based DALL·E visual prompt ———————————
 def generate_visual_prompt(sentence, sentiment):
     system_msg = (
-        "You are a visual prompt engineer using a 5-step system to generate DALL·E prompts.\n"
-        "Use the provided sentiment to choose the appropriate mood and setting.\n\n"
-        f"Sentiment: {sentiment.upper()}\n\n"
-        "Steps:\n"
-        "1. Extract key financial entities and tone.\n"
-        "2. Choose a scene type (e.g., trading floor, commodities chart, bond market, currency desk).\n"
-        "3. Assign symbolic visual elements (charts, arrows, graphs, tickers, metals, oil barrels).\n"
-        "4. Match lighting, mood, and composition to sentiment (stormy, glowing, anxious, confident).\n"
-        "5. Output a single, clean, DALL·E 3–compatible image prompt. Avoid people unless necessary.\n\n"
+        "You are a visual prompt engineer generating DALL·E-compatible prompts from financial narration.\n"
+        "IMPORTANT: Use only the concepts and atmosphere explicitly mentioned or clearly implied in the narration.\n"
+        "Avoid using any numbers, percentages, or generic financial icons (like candlestick charts, tickers, etc.).\n"
+        "Focus on emotional tone, symbolism, setting, mood, and lighting.\n"
+        "Let sentiment guide the lighting and color mood:\n"
+        "- Bullish → optimistic, glowing, rising sun, vibrant energy\n"
+        "- Bearish → somber, cloudy, shadows, muted tones\n"
+        "- Volatile → sharp contrasts, chaotic composition, turbulent visuals\n"
+        "- Neutral → clean, calm, steady, minimalist backgrounds\n"
+        "Do NOT add people unless explicitly mentioned.\n\n"
+        f"Sentiment: {sentiment.upper()}\n"
         f"Narration: {sentence}\n\n"
-        "Output a single detailed prompt below:"
+        "Now output one detailed DALL·E-compatible visual prompt that reflects the above narration faithfully:"
     )
 
     try:
@@ -67,14 +69,12 @@ def generate_visual_prompt(sentence, sentiment):
             messages=[
                 {"role": "system", "content": system_msg}
             ],
-            temperature=0.4
+            temperature=0.2  # Lower temperature for realism
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"❌ Error generating prompt: {e}")
-        fallback = (
-            "A stylized digital trading board with mixed green and red tickers, candlestick charts, and currency symbols under ambient lighting."
-        )
+        fallback = "A stable, neutral financial workspace with ambient light and balanced tones symbolizing market steadiness."
         print("⚡ Using fallback.")
         return fallback
 
