@@ -1,0 +1,43 @@
+name: visual prompt
+
+on:
+  schedule:
+    - cron: "30 8 * * *"  # Daily at 1:00 PM EDT / 10:00 AM MST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  post-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+      
+      - name: Set up Python & dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+
+      # 4️⃣ Visuals from DALL·E
+      - name: Generate visual prompts
+        run: .venv/bin/python generate_visual_prompts.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+
+      # 9️⃣ Commit history logs
+      - name: Commit history logs
+        if: success()
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add visual_prompt_history.txt
+          git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
