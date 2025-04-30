@@ -103,7 +103,7 @@ jobs:
       - name: Generate avatar video
         run: .venv/bin/python generate_video_heygen.py
         env:
-          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API }}
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API1 }}
 
       - name: Save generated avatar video immediately
         run: |
