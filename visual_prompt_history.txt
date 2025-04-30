@@ -383,3 +383,16 @@ VISUAL PROMPTS — 2025-04-30 08:51:27
 
 [Scene 5] 'A vibrant stock market display board showing the Nikkei index in bold green numbers, with a backdrop of the Tokyo skyline and cherry blossom trees in bloom.'
 
+================================================================================
+VISUAL PROMPTS — 2025-04-30 18:03:07
+================================================================================
+[Scene 1] Prompt: A sleek, modern office with large glass windows overlooking a bustling cityscape, a polished desk with a sophisticated laptop displaying financial charts, and a cup of steaming coffee. The Preethi Capital logo is subtly engraved on a silver nameplate, exuding trust and professionalism.
+
+[Scene 2] A bustling New York Stock Exchange interior under dim, moody lighting, with traders looking tense and focused. The digital ticker displays red downward arrows, reflecting the S&P 500 and Nasdaq Composite declines. In the foreground, a bronze bear statue stands prominently, symbolizing the market downturn, while a large screen shows a gloomy financial chart with descending lines. The atmosphere is charged with a sense of urgency and concern.
+
+[Scene 3] A bustling London Stock Exchange interior bathed in soft morning light, with traders in sharp suits focused on monitors. A digital screen shows the FTSE 100 index with a subtle upward green arrow. In the background, a large window reveals a view of the iconic Big Ben under a clear blue sky, symbolizing stability and cautious optimism in European markets.
+
+[Scene 4] A bustling stock exchange floor under harsh fluorescent lights, traders with anxious expressions, surrounded by large screens displaying red downward arrows. In the foreground, a split image of a dimly lit oil pumpjack and a sleek, darkened tech device, symbolizing the energy and tech sectors. The atmosphere is tense, with a sense of urgency and market turmoil.
+
+[Scene 5] A stormy financial district skyline at dusk, with dark clouds looming overhead. In the foreground, a large, tarnished copper ingot and a rusty oil barrel lie on a cracked pavement, symbolizing the decline in commodities. Red downward arrows hover above them, casting a shadow that stretches toward the horizon, evoking a sense of market turmoil and uncertainty.
+
