@@ -1,7 +1,5 @@
 import os
 import time
-import json
-import random
 import requests
 from datetime import datetime
 
@@ -14,43 +12,54 @@ VIDEO_WIDTH = 1280
 VIDEO_HEIGHT = 720
 SPEAK_SPEED = 1.0
 
-# ------------------ FUNCTIONS -------------------
-def download_json(url, file_name):
-    response = requests.get(url, headers=HEADERS)
-    if response.status_code == 200:
-        with open(file_name, "w") as f:
-            json.dump(response.json(), f, indent=2)
-        print(f"✅ Saved {file_name}")
-    else:
-        print(f"❌ Failed to fetch {url}: {response.status_code}")
+# Avatars and their corresponding voices
+AVATAR_VOICE_PAIRS = [
+    {
+        "avatar_id": "Gala_sitting_businesssofa_front",
+        "voice_id": "35b75145af9041b298c720f23375f578",  # Gala - Lifelike
+        "name": "Gala"
+    },
+    {
+        "avatar_id": "Piper_sitting_businesssofa_side",
+        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Piper - Lifelike
+        "name": "Piper Business Sofa Front"
+    },
+    {
+        "avatar_id": "Masha_Office_Front",
+        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Masha - Lifelike
+        "name": "Masha"
+    },
+    {
+        "avatar_id": "Georgia_expressive_2024112701",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia (Upper Body)"
+    },
+    {
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
+    },
+    {
+        "avatar_id": "June_HR_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
+        "name": "Aubrey"
+    }
+]
 
-def load_json(file_name):
-    with open(file_name, "r") as f:
-        return json.load(f)
-
-def select_random_avatar(data):
-    avatars = data.get("data", {}).get("avatars", [])
-    if not avatars:
-        raise Exception("No avatars found.")
-    return random.choice(avatars)
-
-def get_matching_voice_for_avatar_id(avatar_id, voices_data):
-    voices = voices_data.get("data", {}).get("voices", [])
-    for voice in voices:
-        if voice.get("language", "").lower() != "english":
-            continue
-        voice_name = voice.get("name", "")
-        first_word = voice_name.split()[0] if voice_name else ""
-        if first_word and first_word.lower() in avatar_id.lower():
-            return voice.get("voice_id"), voice_name
-    # Fallback to Georgia
-    print("⚠️ No exact voice match found — falling back to Georgia.")
-    return "511ffd086a904ef593b608032004112c", "Georgia - Lifelike"
-
+# ------------------ STEP 1: Read Script -------------------
 def read_script(script_file):
     with open(script_file, 'r', encoding='utf-8') as f:
         return f.read()
 
+# ------------------ STEP 2: Pick Today's Avatar and Voice -------------------
+def get_today_avatar_and_voice():
+    today = datetime.now().weekday()  # Monday=0, Sunday=6
+    avatar_voice = AVATAR_VOICE_PAIRS[today % len(AVATAR_VOICE_PAIRS)]
+    print(f"🎭 Today's avatar: {avatar_voice['name']}")
+    print(f"🗣️ Today's voice ID: {avatar_voice['voice_id']}")
+    return avatar_voice["avatar_id"], avatar_voice["voice_id"]
+
+# ------------------ STEP 3: Generate Avatar Video -------------------
 def generate_avatar_video(script_text, avatar_id, voice_id):
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
@@ -104,6 +113,7 @@ def wait_for_video_ready(video_id):
         print("⏳ Waiting for video to finish rendering...")
         time.sleep(10)
 
+# ------------------ STEP 4: Download Video -------------------
 def download_video(video_url, output_path=AVATAR_OUTPUT):
     r = requests.get(video_url)
     with open(output_path, 'wb') as f:
@@ -114,28 +124,8 @@ def download_video(video_url, output_path=AVATAR_OUTPUT):
 if __name__ == "__main__":
     if not HEYGEN_API_KEY:
         raise ValueError("❌ Missing HEYGEN_API_KEY environment variable")
-
-    HEADERS = { "X-Api-Key": HEYGEN_API_KEY }
-
-    # Download and load avatar/voice data
-    download_json("https://api.heygen.com/v2/avatars", "avatars.json")
-    download_json("https://api.heygen.com/v2/voices", "voices.json")
-
-    avatars_data = load_json("avatars.json")
-    voices_data = load_json("voices.json")
-
-    # Pick a random avatar
-    avatar = select_random_avatar(avatars_data)
-    avatar_id = avatar.get("avatar_id")
-    avatar_name = avatar.get("name")
-    print(f"\n🎭 Selected Avatar: {avatar_name}")
-    print(f"🧍 Avatar ID: {avatar_id}")
-
-    # Match voice using reverse logic, fallback to Georgia if needed
-    voice_id, voice_name = get_matching_voice_for_avatar_id(avatar_id, voices_data)
-    print(f"🗣️ Matched Voice: {voice_name} (ID: {voice_id})")
-
-    # Generate video
+    
     script_text = read_script(SCRIPT_FILE)
-    avatar_video_url = generate_avatar_video(script_text, avatar_id, voice_id)
+    today_avatar, today_voice = get_today_avatar_and_voice()
+    avatar_video_url = generate_avatar_video(script_text, today_avatar, today_voice)
     download_video(avatar_video_url)
