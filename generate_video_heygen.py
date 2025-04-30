@@ -30,38 +30,47 @@ def get_retry_session(retries=3, backoff_factor=0.5):
 
 session = get_retry_session()
 
-# ------------------ STEP 1: Read Script -------------------
+# ------------------ SCRIPT READER -------------------
 def read_script(script_file):
     with open(script_file, 'r', encoding='utf-8') as f:
         return f.read()
 
-# ------------------ STEP 2: Get Live Avatars -------------------
-def fetch_avatars():
+# ------------------ FETCH AVATARS -------------------
+def get_avatars(api_key):
     url = "https://api.heygen.com/v2/avatars"
     headers = {
         "Accept": "application/json",
-        "X-Api-Key": HEYGEN_API_KEY
+        "X-Api-Key": api_key
     }
-    response = session.get(url, headers=headers)
-    response.raise_for_status()
-    avatars = response.json().get("data", {}).get("avatars", [])
-    return avatars
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        avatars = response.json().get("data", {}).get("avatars", [])
+        return avatars
+    else:
+        print("Error fetching avatars:", response.text)
+        return []
 
-# ------------------ STEP 3: Random Avatar + Its Default Voice -------------------
-def select_avatar_with_voice(avatars):
-    valid_avatars = [a for a in avatars if a.get("default_voice_id")]
-    if not valid_avatars:
-        raise Exception("❌ No avatars with default_voice_id found.")
+def select_random_avatar(avatars):
+    if not avatars:
+        return None
+    return random.choice(avatars)
 
-    selected = random.choice(valid_avatars)
-    avatar_id = selected.get("avatar_id")
-    voice_id = selected.get("default_voice_id")
-    print(f"🎭 Selected avatar: {selected.get('avatar_name')}")
-    print(f"🧍 Avatar ID: {avatar_id}")
-    print(f"🗣️ Voice ID (default): {voice_id}")
-    return avatar_id, voice_id
+def display_avatar_details(avatar):
+    print("\n🎭 Selected Avatar:")
+    print(f"Name: {avatar.get('avatar_name')}")
+    print(f"Gender: {avatar.get('gender')}")
+    print(f"Avatar ID: {avatar.get('avatar_id')}")
+    print(f"Preview Image URL: {avatar.get('preview_image_url')}")
+    print(f"Preview Video URL: {avatar.get('preview_video_url')}")
 
-# ------------------ STEP 4: Generate Video -------------------
+# ------------------ GET VOICE BY GENDER -------------------
+def get_voice_id_by_gender(gender):
+    if gender and gender.lower() == "female":
+        return "511ffd086a904ef593b608032004112c"
+    else:
+        return "8445e1a518c74304bcaa5b793d1b2f54"
+
+# ------------------ GENERATE VIDEO -------------------
 def generate_avatar_video(script_text, avatar_id, voice_id):
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
@@ -99,7 +108,7 @@ def generate_avatar_video(script_text, avatar_id, voice_id):
 
     return wait_for_video_ready(video_id)
 
-# ------------------ STEP 5: Wait for Video -------------------
+# ------------------ WAIT FOR VIDEO -------------------
 def wait_for_video_ready(video_id):
     headers = { "X-Api-Key": HEYGEN_API_KEY }
     status_url = f"https://api.heygen.com/v2/video/status?video_id={video_id}"
@@ -122,7 +131,7 @@ def wait_for_video_ready(video_id):
         print("⏳ Waiting for video to finish rendering...")
         time.sleep(10)
 
-# ------------------ STEP 6: Download Video -------------------
+# ------------------ DOWNLOAD VIDEO -------------------
 def download_video(video_url, output_path=AVATAR_OUTPUT):
     r = session.get(video_url)
     r.raise_for_status()
@@ -136,10 +145,15 @@ if __name__ == "__main__":
         raise ValueError("❌ Missing HEYGEN_API_KEY environment variable")
 
     script_text = read_script(SCRIPT_FILE)
-    avatars = fetch_avatars()
+    avatars = get_avatars(HEYGEN_API_KEY)
     if not avatars:
-        raise Exception("❌ Could not fetch avatars.")
+        raise Exception("❌ No avatars found.")
 
-    avatar_id, voice_id = select_avatar_with_voice(avatars)
-    avatar_video_url = generate_avatar_video(script_text, avatar_id, voice_id)
+    avatar = select_random_avatar(avatars)
+    display_avatar_details(avatar)
+
+    voice_id = get_voice_id_by_gender(avatar.get("gender"))
+    print(f"\n🗣️ Assigned Voice ID: {voice_id}")
+
+    avatar_video_url = generate_avatar_video(script_text, avatar.get("avatar_id"), voice_id)
     download_video(avatar_video_url)
