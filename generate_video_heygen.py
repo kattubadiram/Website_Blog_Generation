@@ -47,28 +47,21 @@ def fetch_avatars():
     avatars = response.json().get("data", {}).get("avatars", [])
     return avatars
 
-# ------------------ STEP 3: Get Live Voices -------------------
-def fetch_voices():
-    url = "https://api.heygen.com/v2/voices"
-    headers = {
-        "Accept": "application/json",
-        "X-Api-Key": HEYGEN_API_KEY
-    }
-    response = session.get(url, headers=headers)
-    response.raise_for_status()
-    voices = response.json().get("data", {}).get("voices", [])
-    return voices
+# ------------------ STEP 3: Random Avatar + Its Default Voice -------------------
+def select_avatar_with_voice(avatars):
+    valid_avatars = [a for a in avatars if a.get("default_voice_id")]
+    if not valid_avatars:
+        raise Exception("❌ No avatars with default_voice_id found.")
 
-# ------------------ STEP 4: Match Random Avatar + Voice -------------------
-def select_random_avatar_and_voice(avatars, voices):
-    avatar = random.choice(avatars)
-    voice = random.choice(voices)
-    print(f"🎭 Selected avatar: {avatar.get('avatar_name')}")
-    print(f"🧍 Avatar ID: {avatar.get('avatar_id')}")
-    print(f"🗣️ Voice ID: {voice.get('voice_id')}")
-    return avatar.get("avatar_id"), voice.get("voice_id")
+    selected = random.choice(valid_avatars)
+    avatar_id = selected.get("avatar_id")
+    voice_id = selected.get("default_voice_id")
+    print(f"🎭 Selected avatar: {selected.get('avatar_name')}")
+    print(f"🧍 Avatar ID: {avatar_id}")
+    print(f"🗣️ Voice ID (default): {voice_id}")
+    return avatar_id, voice_id
 
-# ------------------ STEP 5: Generate Video -------------------
+# ------------------ STEP 4: Generate Video -------------------
 def generate_avatar_video(script_text, avatar_id, voice_id):
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
@@ -100,14 +93,13 @@ def generate_avatar_video(script_text, avatar_id, voice_id):
 
     response = session.post(url, headers=headers, json=payload)
     response.raise_for_status()
-
     video_id = response.json().get("data", {}).get("video_id")
     if not video_id:
         raise Exception("❌ Failed to retrieve video_id from HeyGen response.")
 
     return wait_for_video_ready(video_id)
 
-# ------------------ STEP 6: Wait for Video -------------------
+# ------------------ STEP 5: Wait for Video -------------------
 def wait_for_video_ready(video_id):
     headers = { "X-Api-Key": HEYGEN_API_KEY }
     status_url = f"https://api.heygen.com/v2/video/status?video_id={video_id}"
@@ -130,7 +122,7 @@ def wait_for_video_ready(video_id):
         print("⏳ Waiting for video to finish rendering...")
         time.sleep(10)
 
-# ------------------ STEP 7: Download Video -------------------
+# ------------------ STEP 6: Download Video -------------------
 def download_video(video_url, output_path=AVATAR_OUTPUT):
     r = session.get(video_url)
     r.raise_for_status()
@@ -145,11 +137,9 @@ if __name__ == "__main__":
 
     script_text = read_script(SCRIPT_FILE)
     avatars = fetch_avatars()
-    voices = fetch_voices()
+    if not avatars:
+        raise Exception("❌ Could not fetch avatars.")
 
-    if not avatars or not voices:
-        raise Exception("❌ Could not fetch avatars or voices.")
-
-    avatar_id, voice_id = select_random_avatar_and_voice(avatars, voices)
+    avatar_id, voice_id = select_avatar_with_voice(avatars)
     avatar_video_url = generate_avatar_video(script_text, avatar_id, voice_id)
     download_video(avatar_video_url)
