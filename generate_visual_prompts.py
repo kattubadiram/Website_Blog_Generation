@@ -22,37 +22,38 @@ def split_into_scenes(script_text):
 # ——— Generate visual prompt for each scene —————————————————
 def generate_visual_prompt(sentence):
     system_msg = (
-        "You are a professional visual prompt engineer specializing in AI-generated images.\n"
-        "Your task is to convert the narration sentence into a simple, DALL·E-compatible visual prompt.\n"
-        "- All images should be strictly related to finance.\n"
-        "- Focus on **one or two main visual subjects** only.\n"
-        "- **Avoid** describing multiple disconnected ideas or 'split screens'.\n"
-        "- Use **descriptive adjectives and concrete nouns**.\n"
-        "- Create a **single cohesive scene** that is easy to visualize and render.\n"
-        "- Keep the prompt under 200 words.\n"
-        "Example:\n"
+        "You are a professional visual prompt engineer for DALL·E image generation, specializing in financial short-form videos.\n"
+        "Your job is to convert narration lines into single-scene, cinematic image prompts focused on finance, business, or economics.\n"
+        "Use concrete nouns and vivid adjectives. Add setting, subject, symbolic props, and emotion. Keep prompts under 200 words.\n"
+        "Avoid multiple disconnected elements. No text overlays.\n\n"
+        "Example 1:\n"
         "Narration: 'The Federal Reserve raised rates today.'\n"
-        "Visual Prompt: 'A tall modern government building labeled Federal Reserve, surrounded by falling red arrows showing interest rates.'\n"
+        "Prompt: A modern Federal Reserve building under a grey sky, red downward arrows floating in the air, symbolizing rising interest rates and market anxiety.\n\n"
+        "Example 2:\n"
+        "Narration: 'Tesla led the rally with a 4% surge.'\n"
+        "Prompt: A sunlit Wall Street trading floor glowing with green tickers, a shining Tesla logo on the main monitor, and a bronze bull statue in the foreground.\n\n"
+        "Example 3:\n"
+        "Narration: 'Oil prices dropped sharply, dragging energy stocks lower.'\n"
+        "Prompt: A dim-lit oil rig silhouette against a stormy sea, with falling green barrels and red stock chart lines fading in the background.\n"
     )
 
     user_prompt = f"NARRATION: {sentence}\n\nVISUAL PROMPT:"
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_msg},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3
+            temperature=0.4
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"❌ Error generating visual prompt: {e}")
-        # ——— Fallback prompt
         fallback_prompt = (
-            "An animated illustration of a stock market trading floor with rising and falling green and red candlestick charts, "
-            "large stock ticker boards, and arrows showing market movement."
+            "An editorial image of a modern trading floor with glowing monitors showing stock movement, "
+            "symbolic objects like a bull statue or oil barrel to reflect market themes."
         )
         print(f"⚡ Using fallback prompt instead.")
         return fallback_prompt
