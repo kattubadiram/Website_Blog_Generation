@@ -34,12 +34,18 @@ def select_random_avatar(data):
         raise Exception("No avatars found.")
     return random.choice(avatars)
 
-def get_voice_id_by_first_name(first_name, voices_data):
+def get_matching_voice_for_avatar_id(avatar_id, voices_data):
     voices = voices_data.get("data", {}).get("voices", [])
     for voice in voices:
-        if first_name.lower() in voice.get("name", "").lower():
-            return voice.get("voice_id"), voice.get("name")
-    return None, None
+        if voice.get("language", "").lower() != "english":
+            continue
+        voice_name = voice.get("name", "")
+        first_word = voice_name.split()[0] if voice_name else ""
+        if first_word and first_word.lower() in avatar_id.lower():
+            return voice.get("voice_id"), voice_name
+    # Fallback to Georgia
+    print("⚠️ No exact voice match found — falling back to Georgia.")
+    return "511ffd086a904ef593b608032004112c", "Georgia - Lifelike"
 
 def read_script(script_file):
     with open(script_file, 'r', encoding='utf-8') as f:
@@ -125,13 +131,8 @@ if __name__ == "__main__":
     print(f"\n🎭 Selected Avatar: {avatar_name}")
     print(f"🧍 Avatar ID: {avatar_id}")
 
-    # Match voice by avatar's first name
-    first_name = avatar_name.split()[0] if avatar_name else ""
-    voice_id, voice_name = get_voice_id_by_first_name(first_name, voices_data)
-
-    if not voice_id:
-        raise Exception(f"❌ No matching voice found for avatar first name: {first_name}")
-
+    # Match voice using reverse logic, fallback to Georgia if needed
+    voice_id, voice_name = get_matching_voice_for_avatar_id(avatar_id, voices_data)
     print(f"🗣️ Matched Voice: {voice_name} (ID: {voice_id})")
 
     # Generate video
