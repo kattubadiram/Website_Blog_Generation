@@ -49,7 +49,7 @@ def generate_prompt_from_blog(blog_text):
                 "role": "user",
                 "content": (
                     few_shot_examples +
-                    f"Now based on the following blog, generate a cinematic, photorealistic DALL·E poster prompt:\n\n{blog_text}"
+                    f"Now based on the following blog, generate a cinematic, photorealistic DALL·E poster prompt using a white, blue, and grey color palette that is friendly for light mode screens.:\n\n{blog_text}"
                 )
             }
         ],
