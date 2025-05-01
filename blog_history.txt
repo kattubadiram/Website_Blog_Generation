@@ -665,3 +665,22 @@ Commodities showed significant volatility, with crude oil futures (CL=F and BZ=F
 On the bond market, yields on the 10-year Treasury (^TNX) decreased slightly, while the 30-year Treasury yield (^TYX) rose moderately. In currency markets, the dollar index (DX-Y.NYB) ticked up, while the Euro and the British Pound weakened against the dollar.
 
 In the equity sector, technology and energy stocks were under pressure, with ETFs like XLK and XLE declining. Notably, Starbucks (SBUX) and Tesla (TSLA) led the day's losses among major stocks, each shedding significant value.
+
+
+================================================================================
+BLOG ENTRY - 2025-05-01 04:46:45 EDT
+================================================================================
+
+Today is Thursday, 1st of May 2025 ET | This news is brought to you by Preeti Capital, your trusted source for financial insights.
+
+The market opened with mixed sentiments as major indices showed modest shifts. The S&P 500 edged slightly higher by 0.15% to 5569.06, while the Dow Jones led gains with a 0.35% rise. Contrarily, the Nasdaq Composite dipped by 0.09%, driven mostly by declines in tech heavyweights like Tesla, which fell by 3.38%. The Russell 2000 also suffered a setback, dropping 0.63%, suggesting pressure on small-cap stocks.
+
+European and Asian markets presented a divergent picture. Germany's DAX climbed 0.32%, while the FTSE 100 saw a marginal decline. In Asia, Japan's Nikkei 225 surged by 1.13%, showing resilience amid global uncertainties.
+
+Commodity markets faced headwinds with gold prices falling sharply by 2.33% to $3241.6, likely impacted by a stronger dollar, which rose by 0.30%. Crude oil prices also saw declines, with Brent and WTI both falling over 1%. Natural gas, however, bucked the trend with a near 2% increase.
+
+Bond yields were relatively stable, with the 10-year yield at 4.18% showing a slight uptick, reflecting ongoing market expectations for monetary policy adjustments.
+
+Sector performance was varied. Healthcare, as indicated by XLV, rose 0.85%, boosted by Pfizer's 2.61% gain, while the energy sector lagged, as XLE declined by 2.70% amidst falling oil prices.
+
+Overall, the market remains cautiously optimistic, with investors balancing economic data against earnings results.
