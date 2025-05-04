@@ -1,9 +1,6 @@
 name: audio test
 
-on:
-  schedule:
-    - cron: "30 8 * * *"  # Daily at 1:00 PM EDT / 10:00 AM MST
-  workflow_dispatch:
+
 
 permissions:
   contents: write
