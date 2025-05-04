@@ -91,11 +91,41 @@ def generate_blog(market_summary: str):
 
 # ——— Placeholder for Sci-Tech News ——————————————————
 def get_science_news():
-    return (
-        "Breakthrough in quantum computing announced by MIT scientists. "
-        "The new qubit design allows for longer coherence times and better fault tolerance, "
-        "potentially revolutionizing secure computing and cryptography."
-    )
+    from urllib.parse import urlencode
+
+    query_params = {
+        "q": "science AND technology",
+        "category": "ScienceAndTechnology",
+        "count": 3,
+        "mkt": "en-US",
+        "sortBy": "Date"
+    }
+
+    headers = {
+        "Ocp-Apim-Subscription-Key": os.getenv("BING_API_KEY")
+    }
+
+    try:
+        url = os.getenv("BING_API_URL") + "?" + urlencode(query_params)
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        articles = response.json().get("value", [])
+
+        if not articles:
+            return "No breaking science or tech news found today."
+
+        # Combine top 3 headlines and descriptions
+        summary_lines = []
+        for article in articles:
+            title = article.get("name", "Untitled")
+            desc = article.get("description", "")
+            summary_lines.append(f"{title}. {desc}")
+
+        return " ".join(summary_lines)
+
+    except Exception as e:
+        print(f"❌ Failed to fetch Bing science news: {e}")
+        return "Unable to fetch current science and technology news at the moment."
 
 # ——— Sci-Tech Blog Generator ——————————————————————
 def generate_science_blog(science_summary: str):
