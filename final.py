@@ -11,7 +11,7 @@ from openai import OpenAIError
 import image_utils
 from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
 
-# ——— Load credentials —————————————————————————————
+# Load credentials
 load_dotenv()
 OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
 WP_USERNAME     = os.getenv("WP_USERNAME")
@@ -20,7 +20,7 @@ WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-# ——— Helper to get ordinal suffix ————————————————————
+# Helper to get ordinal suffix
 def ordinal(n: int) -> str:
     if 11 <= (n % 100) <= 13:
         suffix = "th"
@@ -28,20 +28,18 @@ def ordinal(n: int) -> str:
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
     return f"{n}{suffix}"
 
-# ——— Logging function —————————————————————————————
+# Logging function
 def log_blog_to_history(blog_content: str):
     LOG_FILE = "blog_history.txt"
-    ts = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York')) \
-             .strftime("%Y-%m-%d %H:%M:%S %Z")
+    ts = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York')).strftime("%Y-%m-%d %H:%M:%S %Z")
     divider = "=" * 80
     entry = f"\n\n{divider}\nBLOG ENTRY - {ts}\n{divider}\n\n{blog_content}\n"
     with open(LOG_FILE, "a") as f:
         f.write(entry)
-    print("📋 Logged to", LOG_FILE)
+    print("Logged to", LOG_FILE)
 
-# ——— Generate the blog —————————————————————————————
+# Generate the blog
 def generate_blog(market_summary: str):
-    # 1) Build the human-friendly date string in Eastern Time
     est = pytz.timezone("America/New_York")
     now_est = datetime.now(pytz.utc).astimezone(est)
     weekday    = now_est.strftime("%A")
@@ -50,22 +48,20 @@ def generate_blog(market_summary: str):
     year       = now_est.year
     day_ord    = ordinal(day_number)
 
-    # 2) Create the system prompt with the new “Today is …” intro
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} ET | This news is brought to you by Preeti Capital, your trusted source for financial insights."
+    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastren Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
     system = {
         "role": "system",
         "content": (
             f"The first line of your output MUST be exactly:\n"
             f"{today_line}\n\n"
-            "You are a senior financial journalist at a top-tier global financial news "
-            "organization like Bloomberg. Use only the factual data provided by the user. "
-            "Do not invent figures, companies, or events. Write a 250-word blog analyzing "
-            "the day's market based on the given summary. Maintain a professional tone suitable "
-            "for institutional investors.\n\n"
+            "You are a senior science and technology journalist at a global publication like Wired or MIT Technology Review. "
+            "Use only the factual data provided by the user. Do not invent figures or events. Write a 250-word blog analyzing "
+            "recent developments in science or technology based on the summary provided. Maintain a tone that is professional, "
+            "insightful, and accessible to educated readers.\n\n"
             "Output strict JSON with three fields:\n"
-            "• 'blog': the analysis\n"
+            "• 'blog': the article\n"
             "• 'summary': a 100-word executive brief prefixed with 'SUMMARY:'\n"
-            "• 'title': an authoritative headline without a timestamp"
+            "• 'title': a concise, journalistic headline without a timestamp"
         )
     }
 
@@ -86,63 +82,62 @@ def generate_blog(market_summary: str):
         summary = data["summary"].strip()
         title   = data["title"].strip()
     except OpenAIError as e:
-        print(f"⚠️ Error processing AI response: {e}")
-        blog    = "Markets continue to adapt..."
-        summary = "SUMMARY: Financial markets are experiencing..."
-        title   = "Market Update: Strategic Positioning in Current Economic Climate"
+        print(f"Error processing AI response: {e}")
+        blog    = "Advancements in science and technology continue to reshape our world."
+        summary = "SUMMARY: Breakthroughs in AI, clean energy, and health tech are leading a new wave of innovation."
+        title   = "Tech & Science: Shaping the Future Through Innovation"
 
     log_blog_to_history(blog)
     return blog, summary, title
 
-# ——— Save locally ———————————————————————————————
+# Save locally
 def save_local(blog: str, summary: str):
     try:
         with open("blog_summary.txt", "w") as f:
             f.write(summary)
         with open("blog_post.txt", "w") as f:
             f.write(blog + "\n\n" + summary)
-        print("📝 Saved locally")
+        print("Saved locally")
     except IOError as e:
-        print(f"❌ Failed to save local files: {e}")
+        print(f"Failed to save local files: {e}")
 
-# ——— Generate video prompt —————————————————————————
+# Generate video prompt
 def generate_video_prompt(summary_text):
     try:
-        print("🎙️ Generating video narration prompt from blog summary...")
+        print("Generating video narration prompt from blog summary...")
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "You are a professional scriptwriter for short financial news videos targeted at investors. "
-                        "Write exactly 2 short, impactful sentences summarizing the financial situation based on the given summary. "
-                        "Be clear, objective, and slightly urgent if market moves are significant. "
-                        "Do NOT include any introduction like 'This news is brought to you by Preeti Capital' — only focus on the financial content."
+                        f"The first line of your output MUST be exactly:\n"
+                        f"{today_line}\n\n"
+                        "You are a professional scriptwriter for short science & tech news videos targeted at curious investors and tech-savvy readers. "
+                        "Write exactly 2 short, impactful sentences summarizing the situation based on the given summary. "
+                        "Be clear, objective, and slightly urgent if relevant. "
                     )
                 },
                 {
                     "role": "user",
-                    "content": f"Write a concise 2-sentence financial short video narration based on this summary:\n\n{summary_text}"
+                    "content": f"Write a concise 2-sentence science/tech video narration based on this summary:\n\n{summary_text}"
                 }
             ],
             temperature=0.6
         )
         pure_narration = response.choices[0].message.content.strip()
-
-        # Prepend the fixed line
         fixed_intro = "This news is brought to you by Preeti Capital, your trusted source for financial insights."
-        narration  = f"{fixed_intro} {pure_narration}"
+        narration = f"{fixed_intro} {pure_narration}"
 
         with open("video_prompt.txt", "w") as f:
             f.write(narration)
-        print("✅ Saved video narration to video_prompt.txt")
+        print("Saved video narration to video_prompt.txt")
         return narration
     except Exception as e:
-        print(f"❌ Failed to generate video narration prompt: {e}")
+        print(f"Failed to generate video narration prompt: {e}")
         return ""
 
-# ——— Publish to WordPress —————————————————————————
+# Publish to WordPress
 def post_to_wordpress(title: str, content: str, featured_media: int):
     try:
         payload = {
@@ -157,22 +152,30 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
             json=payload
         )
         resp.raise_for_status()
-        print("📤 Published post (status", resp.status_code, ")")
+        print("Published post (status", resp.status_code, ")")
     except requests.RequestException as e:
-        print(f"❌ Failed to post to WordPress: {e}")
+        print(f"Failed to post to WordPress: {e}")
 
-# ——— Main Execution ——————————————————————————————
+# Main Execution
 if __name__ == "__main__":
     try:
-        print("📡 Fetching market snapshot...")
+        est = pytz.timezone("America/New_York")
+        today = datetime.now(pytz.utc).astimezone(est).strftime("%A")
+        if today not in ["Saturday", "Sunday"]:
+            print(f"Today is {today}. Skipping science & tech blog generation.")
+            exit(0)
+        else:
+            print(f"Today is {today}. Proceeding with science & technology blog generation...")
+
+        print("Fetching science/tech summary...")
         snapshot        = get_market_snapshot()
         append_snapshot_to_log(snapshot)
         market_summary  = summarize_market_snapshot(snapshot)
 
-        print("📝 Generating blog content...")
+        print("Generating blog content...")
         blog_text, summary_text, base_title = generate_blog(market_summary)
 
-        print("🎨 Fetching and uploading blog poster via Unsplash...")
+        print("Fetching and uploading blog poster via Unsplash...")
         media_obj  = image_utils.fetch_and_upload_blog_poster(blog_text)
         media_id   = media_obj.get("id", 0)
         media_src  = media_obj.get("source_url", "")
@@ -181,7 +184,7 @@ if __name__ == "__main__":
 
         video_prompt = generate_video_prompt(summary_text)
 
-        est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
+        est_now      = datetime.now(pytz.utc).astimezone(est)
         ts_readable  = est_now.strftime("%A, %B %d, %Y %H:%M")
         final_title  = f"{ts_readable} EST  |  {base_title}"
 
@@ -197,10 +200,10 @@ if __name__ == "__main__":
 
         post_body = f'<div>{blog_text}</div>'
 
-        print("📤 Publishing to WordPress...")
+        print("Publishing to WordPress...")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
 
-        print("✅ Done!")
+        print("Done")
 
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"Unexpected error: {e}")
