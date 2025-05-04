@@ -91,41 +91,37 @@ def generate_blog(market_summary: str):
 
 # ——— Placeholder for Sci-Tech News ——————————————————
 def get_science_news():
-    from urllib.parse import urlencode
-
-    query_params = {
-        "q": "science AND technology",
-        "category": "ScienceAndTechnology",
-        "count": 3,
-        "mkt": "en-US",
-        "sortBy": "Date"
-    }
-
-    headers = {
-        "Ocp-Apim-Subscription-Key": os.getenv("BING_API_KEY")
-    }
-
     try:
-        url = os.getenv("BING_API_URL") + "?" + urlencode(query_params)
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        articles = response.json().get("value", [])
+        print("🧠 Using ChatGPT to generate science & technology news summary...")
 
-        if not articles:
-            return "No breaking science or tech news found today."
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a science and technology journalist for a major publication. "
+                    "Summarize the 2-3 most important and recent global developments in science and technology "
+                    "as of today. Include real events, discoveries, product launches, or research breakthroughs. "
+                    "Be factual, relevant, and suitable for a professional audience. Keep it under 250 words."
+                )
+            },
+            {
+                "role": "user",
+                "content": "Please provide today's science and tech news highlights."
+            }
+        ]
 
-        # Combine top 3 headlines and descriptions
-        summary_lines = []
-        for article in articles:
-            title = article.get("name", "Untitled")
-            desc = article.get("description", "")
-            summary_lines.append(f"{title}. {desc}")
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.7
+        )
 
-        return " ".join(summary_lines)
+        news_summary = response.choices[0].message.content.strip()
+        return news_summary
 
     except Exception as e:
-        print(f"❌ Failed to fetch Bing science news: {e}")
-        return "Unable to fetch current science and technology news at the moment."
+        print(f"❌ Failed to generate science news via ChatGPT: {e}")
+        return "Unable to generate science and technology news at this time."
 
 # ——— Sci-Tech Blog Generator ——————————————————————
 def generate_science_blog(science_summary: str):
