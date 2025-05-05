@@ -1,33 +1,28 @@
-name: Upload Video to YouTube Shorts
+name: Upload YouTube Video
 
 on:
-  workflow_dispatch:  # Trigger manually from GitHub Actions UI
-
-permissions:
-  contents: read  # Only need to read repo files
+  workflow_dispatch:  # Manual trigger from GitHub UI
 
 jobs:
-  upload-to-youtube:
+  upload-video:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Python environment
-        run: |
-          sudo apt-get update
-          python3 -m venv .venv
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-      - name: Install YouTube uploader dependencies
+      - name: Install Google API client libraries
         run: |
-          .venv/bin/pip install --upgrade pip setuptools
-          .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client python-dotenv
+          pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
-      - name: Restore YouTube token
-        run: echo "$YOUTUBE_TOKEN_B64" | base64 -d > youtube_token.pkl
+      - name: Upload video to YouTube
         env:
-          YOUTUBE_TOKEN_B64: ${{ secrets.YOUTUBE_TOKEN_NEW }}
-
-      - name: Upload video to YouTube Shorts
-        run: .venv/bin/python upload_to_youtube.py
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: python upload_to_youtube.py
