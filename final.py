@@ -132,7 +132,7 @@ def generate_science_blog(science_summary: str):
     year       = now.year
     day_ord    = ordinal(day_number)
 
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} ET | This science & technology update is brought to you by Preeti Capital."
+    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastren Time | This science & technology update is brought to you by Preeti Capital."
     system = {
         "role": "system",
         "content": (
