@@ -51,7 +51,7 @@ def generate_blog(market_summary: str):
     day_ord    = ordinal(day_number)
 
     # 2) Create the system prompt with the new “Today is …” intro
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} ET | This news is brought to you by Preeti Capital, your trusted source for financial insights."
+    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastren Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
     system = {
         "role": "system",
         "content": (
