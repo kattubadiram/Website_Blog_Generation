@@ -39,8 +39,9 @@ def log_blog_to_history(blog_content: str):
         f.write(entry)
     print("📋 Logged to", LOG_FILE)
 
-# ——— Market Blog Generator —————————————————————————
+# ——— Generate the blog —————————————————————————————
 def generate_blog(market_summary: str):
+    # 1) Build the human-friendly date string in Eastern Time
     est = pytz.timezone("America/New_York")
     now_est = datetime.now(pytz.utc).astimezone(est)
     weekday    = now_est.strftime("%A")
@@ -49,7 +50,8 @@ def generate_blog(market_summary: str):
     year       = now_est.year
     day_ord    = ordinal(day_number)
 
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastren Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
+    # 2) Create the system prompt with the new “Today is …” intro
+    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} ET | This news is brought to you by Preeti Capital, your trusted source for financial insights."
     system = {
         "role": "system",
         "content": (
@@ -67,7 +69,10 @@ def generate_blog(market_summary: str):
         )
     }
 
-    messages = [system, {"role": "user", "content": market_summary}]
+    messages = [
+        system,
+        {"role": "user", "content": market_summary}
+    ]
 
     try:
         resp = client.chat.completions.create(
@@ -85,87 +90,6 @@ def generate_blog(market_summary: str):
         blog    = "Markets continue to adapt..."
         summary = "SUMMARY: Financial markets are experiencing..."
         title   = "Market Update: Strategic Positioning in Current Economic Climate"
-
-    log_blog_to_history(blog)
-    return blog, summary, title
-
-# ——— Placeholder for Sci-Tech News ——————————————————
-def get_science_news():
-    try:
-        print("🧠 Using ChatGPT to generate science & technology news summary...")
-
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a science and technology journalist for a major publication. "
-                    "Summarize the 2-3 most important and recent global developments in science and technology "
-                    "as of today. Include real events, discoveries, product launches, or research breakthroughs. "
-                    "Be factual, relevant, and suitable for a professional audience. Keep it under 250 words."
-                )
-            },
-            {
-                "role": "user",
-                "content": "Please provide today's science and tech news highlights."
-            }
-        ]
-
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.7
-        )
-
-        news_summary = response.choices[0].message.content.strip()
-        return news_summary
-
-    except Exception as e:
-        print(f"❌ Failed to generate science news via ChatGPT: {e}")
-        return "Unable to generate science and technology news at this time."
-
-# ——— Sci-Tech Blog Generator ——————————————————————
-def generate_science_blog(science_summary: str):
-    now = datetime.now(pytz.utc).astimezone(pytz.timezone("America/New_York"))
-    weekday    = now.strftime("%A")
-    day_number = now.day
-    month_name = now.strftime("%B")
-    year       = now.year
-    day_ord    = ordinal(day_number)
-
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastren Time | This science & technology update is brought to you by Preeti Capital."
-    system = {
-        "role": "system",
-        "content": (
-            f"The first line of your output MUST be exactly:\n"
-            f"{today_line}\n\n"
-            "You are a senior science and tech journalist. Write a 250-word blog based on the given summary. "
-            "Focus on innovation, impact, and significance. Do not invent events or data. "
-            "Be accurate and insightful.\n\n"
-            "Output strict JSON with three fields:\n"
-            "• 'blog': the analysis\n"
-            "• 'summary': a 100-word executive brief prefixed with 'SUMMARY:'\n"
-            "• 'title': an authoritative headline without a timestamp"
-        )
-    }
-
-    messages = [system, {"role": "user", "content": science_summary}]
-
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.7,
-            response_format={"type": "json_object"}
-        )
-        data    = json.loads(resp.choices[0].message.content)
-        blog    = data["blog"].strip()
-        summary = data["summary"].strip()
-        title   = data["title"].strip()
-    except OpenAIError as e:
-        print(f"⚠️ Error processing AI response: {e}")
-        blog    = "Technological advancements continue to shape our world..."
-        summary = "SUMMARY: A recent innovation marks a significant leap in the field of computing."
-        title   = "Tech Innovation Update: Quantum Leap in Secure Computing"
 
     log_blog_to_history(blog)
     return blog, summary, title
@@ -205,6 +129,8 @@ def generate_video_prompt(summary_text):
             temperature=0.6
         )
         pure_narration = response.choices[0].message.content.strip()
+
+        # Prepend the fixed line
         fixed_intro = "This news is brought to you by Preeti Capital, your trusted source for financial insights."
         narration  = f"{fixed_intro} {pure_narration}"
 
@@ -238,19 +164,13 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
 # ——— Main Execution ——————————————————————————————
 if __name__ == "__main__":
     try:
-        today = datetime.now(pytz.utc).astimezone(pytz.timezone("America/New_York"))
-        weekday_index = today.weekday()  # Monday=0, Sunday=6
+        print("📡 Fetching market snapshot...")
+        snapshot        = get_market_snapshot()
+        append_snapshot_to_log(snapshot)
+        market_summary  = summarize_market_snapshot(snapshot)
 
-        if weekday_index < 5:
-            print("📡 Weekday detected — Generating Market Blog...")
-            snapshot        = get_market_snapshot()
-            append_snapshot_to_log(snapshot)
-            market_summary  = summarize_market_snapshot(snapshot)
-            blog_text, summary_text, base_title = generate_blog(market_summary)
-        else:
-            print("🔬 Weekend detected — Generating Science & Tech Blog...")
-            science_summary = get_science_news()
-            blog_text, summary_text, base_title = generate_science_blog(science_summary)
+        print("📝 Generating blog content...")
+        blog_text, summary_text, base_title = generate_blog(market_summary)
 
         print("🎨 Fetching and uploading blog poster via Unsplash...")
         media_obj  = image_utils.fetch_and_upload_blog_poster(blog_text)
@@ -261,7 +181,8 @@ if __name__ == "__main__":
 
         video_prompt = generate_video_prompt(summary_text)
 
-        ts_readable  = today.strftime("%A, %B %d, %Y %H:%M")
+        est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
+        ts_readable  = est_now.strftime("%A, %B %d, %Y %H:%M")
         final_title  = f"{ts_readable} EST  |  {base_title}"
 
         header_html = (
