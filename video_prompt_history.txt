@@ -232,3 +232,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Today, major U.S. indices closed lower, with the S&P 500 down 0.64% and the Nasdaq falling 0.74%. European and Asian markets showed mixed results, while bond yields rose. The U.S. dollar weakened, and commodity prices climbed, with gold and silver gaining over 1.9%. Energy stocks led declines, with XLE dropping 1.81%. Increased market volatility reflects growing investor caution amid economic uncertainty and geopolitical tensions.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-06 18:53:11
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Today, U.S. markets faced turbulence, with the S&P 500 and Dow Jones closing lower amid increased volatility. The VIX rose 4.19%. In contrast, Asian markets thrived, with gains in the Nikkei and Hang Seng. Bond yields fell, signaling a flight to safety, while the dollar weakened. Commodities surged, particularly gold and oil, as investors hedge against inflation. However, the healthcare and technology sectors struggled, with notable declines in stocks like Merck and Palantir, reflecting ongoing economic uncertainties.
+
