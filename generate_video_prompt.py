@@ -65,7 +65,7 @@ def generate_voiceover_script(summary: str) -> str:
     with open(latest_path, "w", encoding="utf-8") as f:
         f.write(voiceover_script)
 
-    print("\n✅ 20-second voiceover script generated and saved.")
+    print("\n 20-second voiceover script generated and saved.")
     return voiceover_script
 
 # ——— Main execution ————————————————————————————————
