@@ -1,10 +1,14 @@
+# fetch_and_upload_blog_poster.py
+
 import openai
 import requests
 import os
 import base64
 from dotenv import load_dotenv
 
-# ——— Load credentials —————————————————————————————
+# -------------------------
+# Load API keys and site credentials from environment
+# -------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WP_USERNAME = os.getenv("WP_USERNAME")
@@ -13,8 +17,10 @@ WP_SITE_URL = os.getenv("WP_SITE_URL")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
+# -------------------------
+# Generate DALL·E-style image prompt from blog text using GPT
+# -------------------------
 def generate_prompt_from_blog(blog_text):
-    """Generate a cinematic and realistic DALL·E-style poster prompt from blog content using GPT-4o, with few-shot examples."""
     few_shot_intro = (
         "You are a professional visual prompt engineer working for a top-tier editorial image agency. "
         "Your task is to translate financial or news blog content into detailed, cinematic prompts for realistic poster generation using AI (like DALL·E). "
@@ -41,24 +47,21 @@ def generate_prompt_from_blog(blog_text):
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {
-                "role": "system",
-                "content": few_shot_intro
-            },
+            {"role": "system", "content": few_shot_intro},
             {
                 "role": "user",
-                "content": (
-                    few_shot_examples +
+                "content": few_shot_examples + 
                     f"Now based on the following blog, generate a cinematic, photorealistic DALL·E poster prompt using a white, blue, and grey color palette that is friendly for light mode screens.:\n\n{blog_text}"
-                )
             }
         ],
         temperature=0.8
     )
     return response.choices[0].message.content.strip()
 
+# -------------------------
+# Generate DALL·E image from prompt and save to file
+# -------------------------
 def generate_dalle_image(prompt, output_path="blog_poster.png"):
-    """Generate image using DALL·E and save to disk."""
     image_response = client.images.generate(
         model="dall-e-3",
         prompt=prompt,
@@ -71,8 +74,10 @@ def generate_dalle_image(prompt, output_path="blog_poster.png"):
         f.write(img_data)
     return output_path
 
+# -------------------------
+# Upload image to WordPress media library
+# -------------------------
 def upload_image_to_wp(image_path):
-    """Upload an image to WordPress and return the media object JSON."""
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Image not found: {image_path}")
 
@@ -99,23 +104,24 @@ def upload_image_to_wp(image_path):
     else:
         raise Exception(f"Upload failed: {response.status_code} - {response.text}")
 
-# ——— Combined Utility Function ————————————————————————
+# -------------------------
+# Full pipeline: generate image and upload it to WordPress
+# -------------------------
 def fetch_and_upload_blog_poster(blog_text, output_path="blog_poster.png"):
-    """End-to-end: Generate DALL·E image and upload to WordPress."""
     try:
-        print("🧠 Generating DALL·E prompt...")
+        print("Generating DALL·E prompt...")
         prompt = generate_prompt_from_blog(blog_text)
-        print(f"🎯 Prompt: {prompt}")
+        print(f"Prompt: {prompt}")
 
-        print("🎨 Generating poster image...")
+        print("Generating poster image...")
         image_path = generate_dalle_image(prompt, output_path)
-        print(f"✅ Poster saved: {image_path}")
+        print(f"Poster saved: {image_path}")
 
-        print("☁️ Uploading to WordPress...")
+        print("Uploading to WordPress...")
         media_info = upload_image_to_wp(image_path)
-        print("✅ Uploaded:", media_info.get("source_url"))
+        print("Uploaded:", media_info.get("source_url"))
         return media_info
 
     except Exception as e:
-        print(f"❌ Error in poster generation/upload: {e}")
+        print(f"Error in poster generation/upload: {e}")
         return {}
