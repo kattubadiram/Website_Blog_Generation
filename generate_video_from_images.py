@@ -22,7 +22,7 @@ def create_video_from_images(image_files, slide_duration=5):
             .overwrite_output()
             .run()
         )
-        print(f"✅ Created slide video: {output_path}")
+        print(f" Created slide video: {output_path}")
     return sorted(glob(f"{TEMP_DIR}/slide_*.mp4"))
 
 # ——— Concatenate all slide videos ————————————————————————
@@ -53,13 +53,13 @@ def add_audio_to_video(video_path, audio_path, output_path):
         .overwrite_output()
         .run()
     )
-    print(f"✅ Final video with audio saved to {output_path}")
+    print(f" Final video with audio saved to {output_path}")
 
 # ——— Main workflow ————————————————————————————————————————
 if __name__ == "__main__":
     image_files = natsorted(glob(f"{IMG_DIR}/scene_*.png"))
     if not image_files:
-        print("❌ No images found in ai_images/. Cannot generate video.")
+        print(" No images found in ai_images/. Cannot generate video.")
         exit(1)
 
     slide_videos = create_video_from_images(image_files, slide_duration=5)
