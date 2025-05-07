@@ -246,3 +246,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Global markets are facing a downturn, with the S&P 500 and Dow Jones down 0.77% and 0.95% respectively. Volatility is on the rise, as indicated by a 4.74% increase in the CBOE Volatility Index. Asian markets display mixed results, while commodities show varied performance. Notably, healthcare stocks are struggling, with Merck and Pfizer both dropping over 4%, and tech stocks are under pressure, highlighted by a staggering 12% fall in Palantir Technologies.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-07 08:51:44
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Global markets faced a downturn today, with the S&P 500, Nasdaq, and Dow Jones all closing lower. European markets mixed, as the DAX gained slightly. Commodities saw volatility, with rising crude oil and natural gas prices. The U.S. dollar strengthened, affecting euro and pound exchange rates. Notably, healthcare and tech sectors struggled, highlighted by declines in Merck, Pfizer, and Palantir, reflecting investor caution over valuations and regulatory concerns.
+
