@@ -105,10 +105,10 @@ def wait_for_video_ready(video_id):
         data = response.json()["data"]
 
         if data["status"] == "completed":
-            print("✅ Video is ready!")
+            print(" Video is ready!")
             return data["video_url"]
         elif data["status"] == "failed":
-            raise Exception("❌ Video generation failed.")
+            raise Exception(" Video generation failed.")
         
         print("⏳ Waiting for video to finish rendering...")
         time.sleep(10)
@@ -123,7 +123,7 @@ def download_video(video_url, output_path=AVATAR_OUTPUT):
 # ------------------ MAIN -------------------
 if __name__ == "__main__":
     if not HEYGEN_API_KEY:
-        raise ValueError("❌ Missing HEYGEN_API_KEY environment variable")
+        raise ValueError(" Missing HEYGEN_API_KEY environment variable")
     
     script_text = read_script(SCRIPT_FILE)
     today_avatar, today_voice = get_today_avatar_and_voice()
