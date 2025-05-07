@@ -11,7 +11,7 @@ PROMPT_FOLDER = "visual_prompts"
 OUTPUT_FOLDER = "ai_images"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-MAX_IMAGES = 7  # 🔪 LIMIT TO FIRST N IMAGES TO REDUCE VIDEO LENGTH
+MAX_IMAGES = 7  #  LIMIT TO FIRST N IMAGES TO REDUCE VIDEO LENGTH
 
 def read_prompt(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
@@ -31,20 +31,20 @@ def generate_image(prompt, output_path):
         img_data = requests.get(image_url).content
         with open(output_path, 'wb') as f:
             f.write(img_data)
-        print(f"✅ Saved image to {output_path}")
+        print(f" Saved image to {output_path}")
     except Exception as e:
-        print(f"❌ Failed to generate image: {e}")
+        print(f" Failed to generate image: {e}")
 
 if __name__ == "__main__":
     prompt_files = sorted([
         f for f in os.listdir(PROMPT_FOLDER)
         if f.endswith(".txt")
-    ])[:MAX_IMAGES]  # ✂️ LIMIT NUMBER OF VISUAL PROMPTS
+    ])[:MAX_IMAGES]  #  LIMIT NUMBER OF VISUAL PROMPTS
 
     for i, filename in enumerate(prompt_files, start=1):
         prompt_path = os.path.join(PROMPT_FOLDER, filename)
         prompt_text = read_prompt(prompt_path)
-        print(f"🎨 Generating image for scene {i}...")
+        print(f" Generating image for scene {i}...")
 
         output_file = os.path.join(OUTPUT_FOLDER, f"scene_{i}.png")
         generate_image(prompt_text, output_file)
