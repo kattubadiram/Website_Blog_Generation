@@ -1,33 +1,36 @@
 name: Blog Generation
 
+on:
+  workflow_dispatch:  # Only runs manually
+
 permissions:
-  contents: write
+  contents: write  # Needed to push changes back to the repo
 
 jobs:
   post-blog:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: ✅ Checkout code
         uses: actions/checkout@v3
         with:
           persist-credentials: true
 
-      - name: Set up Python environment
+      - name: 🛠 Set up Python environment
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
           python3 -m venv .venv
 
-      - name: Cache pip dependencies
+      - name: 📦 Cache pip dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/generate_video_heygen.py', '**/edit_and_merge_video.py') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.py') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install Python dependencies
+      - name: 📥 Install Python dependencies
         run: |
           .venv/bin/pip install --upgrade pip setuptools
           .venv/bin/pip install --no-cache-dir \
@@ -36,33 +39,33 @@ jobs:
             moviepy==1.0.3 yfinance feedparser \
             google-cloud-texttospeech gtts
 
-      - name: Fetch market data and save snapshot
+      - name: 📊 Fetch market data
         run: .venv/bin/python market_snapshot_fetcher.py
 
-      - name: Run blog and summary generator
+      - name: ✍️ Generate blog content
         run: .venv/bin/python final.py
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+          WP_USERNAME:      ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD:  ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:      ${{ secrets.WP_SITE_URL }}
 
-      - name: Write Google credentials to file
+      - name: 🔐 Write Google credentials
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
 
-      - name: Verify Google Cloud credentials
+      - name: 🔍 Verify Google Cloud auth
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('Google Cloud auth works')"
 
-      - name: Generate blog voiceover
+      - name: 🎤 Generate blog voiceover (MP3)
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
-      
-      - name: Commit and push voiceover to Git
+
+      - name: 🚀 Commit and push voiceover to Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
