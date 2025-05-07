@@ -126,16 +126,32 @@ def post_to_wordpress(title, content, featured_media):
 
 if __name__ == "__main__":
     try:
+        print("Fetching latest science/technology news...")
         news_summary = fetch_latest_science_news()
-        blog_text, summary_text, base_title = generate_blog(news_summary)
-        image_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
-        media_id = image_obj.get("id", 0)
-        media_src = image_obj.get("source_url", "")
 
-        narration = generate_video_prompt(summary_text)
+        print("Generating blog content...")
+        blog_text, summary_text, base_title = generate_blog(news_summary)
+
+        print("Fetching and uploading blog poster via Unsplash...")
+        media_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
+        media_id  = media_obj.get("id", 0)
+        media_src = media_obj.get("source_url", "")
+
+        # ✅ Save in original filenames for compatibility
+        with open("blog_post.txt", "w") as f:
+            f.write(blog_text + "\n\n" + summary_text)
+
+        with open("blog_summary.txt", "w") as f:
+            f.write(summary_text)
+
+        print("Saved blog and summary to local files.")
+
+        video_prompt = generate_video_prompt(summary_text)
+        with open("video_prompt.txt", "w") as f:
+            f.write(video_prompt)
 
         now_est = datetime.now(pytz.utc).astimezone(pytz.timezone("America/New_York"))
-        ts_str = now_est.strftime("%A, %B %d, %Y %H:%M")
+        ts_str  = now_est.strftime("%A, %B %d, %Y %H:%M")
         final_title = f"{ts_str} EST | {base_title}"
 
         header_html = (
@@ -145,7 +161,13 @@ if __name__ == "__main__":
         )
         post_body = f"{header_html}<div>{blog_text}</div>"
 
+        print("Posting science blog to WordPress...")
         post_to_wordpress(final_title, post_body, media_id)
 
+        # ✅ Also log to history (optional)
+        log_blog_to_history(blog_text)
+
+        print("Done.")
+
     except Exception as e:
-        print(f"Unexpected error in tech blog flow: {e}")
+        print(f"Unexpected error in science blog flow: {e}")
