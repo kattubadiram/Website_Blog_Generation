@@ -25,8 +25,8 @@ AVATAR_VOICE_PAIRS = [
         "name": "Piper Business Sofa Front"
     },
     {
-        "avatar_id": "Masha_Office_Front",
-        "voice_id": "72a90016199b4a31bd6d8a003eef8ee2",  # Masha - Lifelike
+        "avatar_id": "June_HR_public",
+        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Masha - Lifelike
         "name": "Masha"
     },
     {
