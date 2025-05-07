@@ -239,3 +239,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Today, U.S. markets faced turbulence, with the S&P 500 and Dow Jones closing lower amid increased volatility. The VIX rose 4.19%. In contrast, Asian markets thrived, with gains in the Nikkei and Hang Seng. Bond yields fell, signaling a flight to safety, while the dollar weakened. Commodities surged, particularly gold and oil, as investors hedge against inflation. However, the healthcare and technology sectors struggled, with notable declines in stocks like Merck and Palantir, reflecting ongoing economic uncertainties.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-07 05:26:12
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Global markets are facing a downturn, with the S&P 500 and Dow Jones down 0.77% and 0.95% respectively. Volatility is on the rise, as indicated by a 4.74% increase in the CBOE Volatility Index. Asian markets display mixed results, while commodities show varied performance. Notably, healthcare stocks are struggling, with Merck and Pfizer both dropping over 4%, and tech stocks are under pressure, highlighted by a staggering 12% fall in Palantir Technologies.
+
