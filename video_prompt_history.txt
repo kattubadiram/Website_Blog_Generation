@@ -260,3 +260,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 In a significant breakthrough for quantum computing, scientists have found that chromium sulfide bromide can store quantum information in a single dimension, greatly minimizing decoherence. This advancement leverages magnetic switching to bolster data stability, paving the way for more reliable quantum systems. The implications are vast, potentially transforming fields like cryptography and climate modeling with enhanced processing power for complex challenges.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-07 15:52:10
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Today, global markets showed mixed results. The S&P 500 and Nasdaq Composite dipped, while the Dow Jones gained ground. In Europe, the FTSE 100 and DAX fell, and Asian markets were also mixed. Bond yields dropped, reflecting market caution, as the U.S. dollar strengthened against the Euro and GBP. Commodities faced broad declines, except for a spike in natural gas. Notably, Alphabet fell sharply, while Nike and Johnson & Johnson saw gains.
+
