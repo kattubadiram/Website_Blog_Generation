@@ -253,3 +253,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Global markets faced a downturn today, with the S&P 500, Nasdaq, and Dow Jones all closing lower. European markets mixed, as the DAX gained slightly. Commodities saw volatility, with rising crude oil and natural gas prices. The U.S. dollar strengthened, affecting euro and pound exchange rates. Notably, healthcare and tech sectors struggled, highlighted by declines in Merck, Pfizer, and Palantir, reflecting investor caution over valuations and regulatory concerns.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-07 14:08:22
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+In a significant breakthrough for quantum computing, scientists have found that chromium sulfide bromide can store quantum information in a single dimension, greatly minimizing decoherence. This advancement leverages magnetic switching to bolster data stability, paving the way for more reliable quantum systems. The implications are vast, potentially transforming fields like cryptography and climate modeling with enhanced processing power for complex challenges.
+
