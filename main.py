@@ -4,12 +4,12 @@ import os
 import pytz
 from datetime import datetime
 
-from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
-from blog.generate_blog import generate_blog
-from blog.save_local import save_local
-from video.generate_prompt import generate_video_prompt
-from wordpress.post_to_wp import post_to_wordpress
-import image_utils
+from modules.blog.market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
+from modules.blog.generate_blog import generate_blog
+from utils.save_local import save_local
+from modules.media.generate_video_prompt import generate_video_prompt
+from modules.uploader.post_to_wp import post_to_wordpress
+from utils import image_utils
 
 def main():
     try:
