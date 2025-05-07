@@ -55,7 +55,7 @@ def generate_blog(market_summary: str):
             f"You are a senior financial journalist writing for institutional investors.\n\n"
             f"Start the blog post with this exact sentence:\n"
             f"{today_line}\n\n"
-            "Then, write a 250-word analysis of today's global market based strictly on the provided summary. "
+            "Then, write a 3750-word analysis of today's global market based strictly on the provided summary. "
             "Do not fabricate or add any external data. Maintain a professional, analytical tone.\n\n"
             "IMPORTANT FORMATTING:\n"
             "- Use only the full names of indices and companies (e.g., 'S&P 500' instead of '^GSPC').\n"
