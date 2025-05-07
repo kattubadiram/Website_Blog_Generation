@@ -1,0 +1,163 @@
+name: Post Science Blog to WordPress
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 9 * * 6"  # Saturday at 5:45 AM EDT
+    - cron: "45 9 * * 0"  # Sunday at 5:45 AM EDT
+
+permissions:
+  contents: write
+
+jobs:
+  post-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set up Python environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
+          python3 -m venv .venv
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/generate_video_heygen.py', '**/edit_and_merge_video.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools
+          .venv/bin/pip install --no-cache-dir \
+            pytz requests python-dotenv openai>=1.0.0 \
+            ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
+            moviepy==1.0.3 yfinance feedparser \
+            google-cloud-texttospeech gtts
+
+      - name: Verify ffmpeg-python is importable
+        run: .venv/bin/python -c "import ffmpeg; print('ffmpeg-python works')"
+
+      - name: Fetch market data and save snapshot
+        run: .venv/bin/python market_snapshot_fetcher.py
+
+      # 🔁 REPLACED THIS SCRIPT
+      - name: Run blog and summary generator
+        run: .venv/bin/python science.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+          NEWS_API_KEY:    ${{ secrets.NEWS_API_KEY }}
+
+      - name: Write Google credentials to file
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+
+      - name: Verify Google Cloud credentials
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('Google Cloud auth works')"
+
+      - name: Generate blog voiceover
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python generate_audio_from_blog.py
+
+      - name: Generate 20s video narration
+        run: .venv/bin/python generate_video_prompt.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Generate video voiceover
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python generate_audio_for_video.py
+
+      - name: Generate avatar video
+        run: .venv/bin/python generate_video_heygen.py
+        env:
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API1 }}
+
+      - name: Save generated avatar video immediately
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add avatar_video.mp4
+          git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+
+      - name: Generate visual prompts
+        run: .venv/bin/python generate_visual_prompts.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Generate AI images
+        run: .venv/bin/python generate_ai_images.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Merge avatar video and overlay images
+        run: .venv/bin/python edit_and_merge_video.py
+
+      - name: Save generated final video immediately
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add video_output.mp4
+          git commit -m "Save generated video_output.mp4 [skip ci]" || echo "No video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+
+      - name: Upload blog audio to WordPress
+        run: .venv/bin/python upload_audio_and_embed.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Install YouTube uploader dependencies
+        run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Upload video to YouTube
+        run: .venv/bin/python upload_to_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+
+      - name: Save AI-generated images to repo
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add ai_images/*.png
+          git commit -m "Save AI-generated scene images [skip ci]" || echo "No AI image changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+
+      - name: Commit history logs
+        if: success()
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add blog_history.txt market_snapshot_log.jsonl video_prompt_history.txt visual_prompt_history.txt
+          git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
