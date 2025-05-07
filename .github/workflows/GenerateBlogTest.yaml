@@ -63,7 +63,7 @@ jobs:
       - name: 🎤 Generate blog voiceover (split + merge)
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python generate_audio.py
+          .venv/bin/python generate_audio_from_blog.py
 
       - name: 🚀 Commit and push voiceover to Git
         run: |
