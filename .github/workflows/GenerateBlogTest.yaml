@@ -1,10 +1,10 @@
 name: Blog Generation
 
 on:
-  workflow_dispatch:  # Only runs manually
+  workflow_dispatch:  # Manual trigger only
 
 permissions:
-  contents: write  # Needed to push changes back to the repo
+  contents: write  # Required to push voiceover back to GitHub
 
 jobs:
   post-blog:
@@ -26,7 +26,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.py') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.py', '**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -42,7 +42,7 @@ jobs:
       - name: 📊 Fetch market data
         run: .venv/bin/python market_snapshot_fetcher.py
 
-      - name: ✍️ Generate blog content
+      - name: ✍️ Generate blog content + poster
         run: .venv/bin/python final.py
         env:
           OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
@@ -60,10 +60,10 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('Google Cloud auth works')"
 
-      - name: 🎤 Generate blog voiceover (MP3)
+      - name: 🎤 Generate blog voiceover (split + merge)
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python generate_audio_from_blog.py
+          .venv/bin/python generate_audio.py
 
       - name: 🚀 Commit and push voiceover to Git
         run: |
