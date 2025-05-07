@@ -72,3 +72,12 @@ jobs:
           git add blog_voiceover.mp3
           git commit -m "Add generated blog voiceover" || echo "No changes to commit"
           git push origin main
+     
+      - name: 🚀 Commit and push blog_voiceover.mp3
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add blog_voiceover.mp3
+          git commit -m "Generated blog voiceover [manual run] [skip ci]" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
