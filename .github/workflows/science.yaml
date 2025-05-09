@@ -2,9 +2,6 @@ name: Post Science Blog to WordPress
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "45 9 * * 6"  # Saturday at 5:45 AM EDT
-    - cron: "45 9 * * 0"  # Sunday at 5:45 AM EDT
 
 permissions:
   contents: write
