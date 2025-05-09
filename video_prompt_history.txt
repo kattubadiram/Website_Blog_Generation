@@ -274,3 +274,10 @@ This news is brought to you by Preethi Capital, your trusted source for financia
 
 Global markets showed cautious optimism today, with the S&P 500 and Dow Jones both gaining, the latter rising 0.70% thanks to healthcare and financial stocks. However, technology stocks faced challenges, particularly Alphabet dragging down the Nasdaq. European and Asian markets, including Germany's DAX and Japan's Nikkei, performed well. The U.S. dollar strengthened, leading to a drop in gold prices over 1.36%. Energy commodities saw slight increases, reflecting steady demand as investors navigate a complex economic landscape.
 
+================================================================================
+VOICEOVER SCRIPT — 2025-05-09 08:48:34
+================================================================================
+This news is brought to you by Preethi Capital, your trusted source for financial insights. 
+
+Global markets wrapped up the week positively, with the S&P 500, NASDAQ, and Nikkei 225 all posting gains. The Russell 2000 led the way, showcasing strong small-cap performance. European indices also rose, while the Shanghai Composite dipped slightly. Bond yields were mixed, but commodities like oil and gold climbed. Tech stocks, particularly Palantir and C3.ai, outperformed, reflecting an optimistic market sentiment driven by positive economic outlooks and robust corporate earnings.
+
