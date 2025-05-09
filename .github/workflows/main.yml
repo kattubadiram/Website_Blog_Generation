@@ -1,9 +1,7 @@
 name: Post Blog to WordPress
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "30 8 * * *"  # Daily at 1:00 PM EDT / 10:00 AM MST
+  workflow_dispatch:  # Manual trigger only
 
 permissions:
   contents: write
