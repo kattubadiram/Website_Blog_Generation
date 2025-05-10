@@ -38,58 +38,66 @@ def log_blog_to_history(blog_content: str):
         f.write(entry)
     print("Logged to", LOG_FILE)
 
-def generate_blog(market_summary: str):
+def generate_blog(market_summary: str, total_sections: int = 5):
+    def build_section_prompt(market_text: str, section_index: int, total_sections: int) -> str:
+        return (
+            f"You are a professional financial journalist writing a long-form market blog.\n\n"
+            f"MARKET SNAPSHOT:\n{market_text}\n\n"
+            f"Write section {section_index + 1} of {total_sections}. Each section should be 400–500 words.\n"
+            "- Create a clear, relevant heading.\n"
+            "- Do not repeat information from earlier sections.\n"
+            "- Use journalistic flow and analysis.\n"
+            "- First section: introduce context. Final section: conclude or project outlook.\n"
+        )
+
+    def generate_section(prompt: str) -> str:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a skilled financial blog writer."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+
     est = pytz.timezone("America/New_York")
     now_est = datetime.now(pytz.utc).astimezone(est)
-    weekday    = now_est.strftime("%A")
+    weekday = now_est.strftime("%A")
     day_number = now_est.day
     month_name = now_est.strftime("%B")
-    year       = now_est.year
-    day_ord    = ordinal(day_number)
-
-    today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
-
-    system = {
-        "role": "system",
-        "content": (
-            f"You are a senior financial journalist writing for institutional investors.\n\n"
-            f"Start the blog post with this exact sentence:\n"
-            f"{today_line}\n\n"
-            "Then, write a 250-word analysis of today's global market based strictly on the provided summary. "
-            "Do not fabricate or add any external data. Maintain a professional, analytical tone.\n\n"
-            "IMPORTANT FORMATTING:\n"
-            "- Use only the full names of indices and companies (e.g., 'S&P 500' instead of '^GSPC').\n"
-            "- Do NOT include symbols inside brackets like (^IXIC).\n\n"
-            "Return the result as strict JSON with exactly three fields:\n"
-            "- 'blog': full post starting with the exact opening sentence provided above.\n"
-            "- 'summary': a 100-word executive brief starting with 'SUMMARY:'.\n"
-            "- 'title': a strong headline without timestamps."
-        )
-    }
+    year = now_est.year
+    day_ord = ordinal(day_number)
+    intro_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
 
     clean_summary = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary)
+    blog_parts = []
+    for i in range(total_sections):
+        print(f"[{i+1}/{total_sections}] Generating section...")
+        prompt = build_section_prompt(clean_summary, i, total_sections)
+        section = generate_section(prompt)
+        blog_parts.append(section)
 
-    messages = [
-        system,
-        {"role": "user", "content": clean_summary}
-    ]
+    full_blog = "\n\n".join(blog_parts)
+    blog = f"{intro_line}\n\n{full_blog}"
 
     try:
-        resp = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
-            messages=messages,
-            temperature=0.7,
+            messages=[
+                {"role": "system", "content": "Summarize the blog and generate a strong title."},
+                {"role": "user", "content": blog}
+            ],
+            temperature=0.6,
             response_format={"type": "json_object"}
         )
-        data    = json.loads(resp.choices[0].message.content)
-        blog    = data["blog"].strip()
-        summary = data["summary"].strip()
-        title   = data["title"].strip()
-    except OpenAIError as e:
-        print(f"Error processing AI response: {e}")
-        blog    = "Markets continue to adapt..."
-        summary = "SUMMARY: Financial markets are experiencing..."
-        title   = "Market Update: Strategic Positioning in Current Economic Climate"
+        data = json.loads(response.choices[0].message.content)
+        summary = data.get("summary", "SUMMARY: Financial markets were active today...").strip()
+        title = data.get("title", "Market Trends and Investor Outlook").strip()
+    except Exception as e:
+        print(f"Failed to generate summary/title: {e}")
+        summary = "SUMMARY: Financial markets were active today..."
+        title = "Market Trends and Investor Outlook"
 
     log_blog_to_history(blog)
     return blog, summary, title
@@ -127,9 +135,8 @@ def generate_video_prompt(summary_text):
             temperature=0.6
         )
         pure_narration = response.choices[0].message.content.strip()
-
         fixed_intro = "This news is brought to you by Preeti Capital, your trusted source for financial insights."
-        narration  = f"{fixed_intro} {pure_narration}"
+        narration = f"{fixed_intro} {pure_narration}"
 
         with open("video_prompt.txt", "w") as f:
             f.write(narration)
@@ -160,25 +167,24 @@ def post_to_wordpress(title: str, content: str, featured_media: int):
 if __name__ == "__main__":
     try:
         print("Fetching market snapshot...")
-        snapshot        = get_market_snapshot()
+        snapshot = get_market_snapshot()
         append_snapshot_to_log(snapshot)
-        market_summary  = summarize_market_snapshot(snapshot)
+        market_summary = summarize_market_snapshot(snapshot)
 
         print("Generating blog content...")
-        blog_text, summary_text, base_title = generate_blog(market_summary)
+        blog_text, summary_text, base_title = generate_blog(market_summary, total_sections=4)
 
         print("Fetching and uploading blog poster via Unsplash...")
-        media_obj  = image_utils.fetch_and_upload_blog_poster(blog_text)
-        media_id   = media_obj.get("id", 0)
-        media_src  = media_obj.get("source_url", "")
+        media_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
+        media_id = media_obj.get("id", 0)
+        media_src = media_obj.get("source_url", "")
 
         save_local(blog_text, summary_text)
-
         video_prompt = generate_video_prompt(summary_text)
 
-        est_now      = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
-        ts_readable  = est_now.strftime("%A, %B %d, %Y %H:%M")
-        final_title  = f"{ts_readable} EST  |  {base_title}"
+        est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
+        ts_readable = est_now.strftime("%A, %B %d, %Y %H:%M")
+        final_title = f"{ts_readable} EST  |  {base_title}"
 
         header_html = (
             '<div style="display:flex; align-items:center; margin-bottom:20px;">'
@@ -190,7 +196,7 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        post_body = f'<div>{blog_text}</div>'
+        post_body = f'<div>{header_html}</div><div>{blog_text}</div>'
 
         print("Publishing to WordPress...")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
