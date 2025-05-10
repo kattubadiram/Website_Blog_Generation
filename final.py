@@ -29,8 +29,10 @@ def ordinal(n: int) -> str:
     return f"{n}{suffix}"
 
 def clean_text(text: str) -> str:
-    text = re.sub(r'[^\x00-\x7F]+', '', text)  # Remove non-ASCII
-    text = re.sub(r'\s+', ' ', text)           # Normalize whitespace
+    # Remove Yahoo Finance tickers like ^GSPC or ^N225
+    text = re.sub(r'\^[A-Z0-9\.\-]+', '', text)
+    # Normalize spacing
+    text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
 def log_blog_to_history(blog_content: str):
@@ -75,8 +77,8 @@ def generate_blog(market_summary: str, total_sections: int = 5):
     day_ord = ordinal(day_number)
     intro_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
 
-    clean_summary = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary)
     blog_parts = []
+    clean_summary = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary)
     for i in range(total_sections):
         print(f"[{i+1}/{total_sections}] Generating section...")
         prompt = build_section_prompt(clean_summary, i, total_sections)
@@ -206,7 +208,11 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        post_body = f'<div>{header_html}</div><div>{blog_text}</div>'
+        # Format blog into HTML paragraphs
+        blog_paragraphs = blog_text.strip().split("\n")
+        formatted_blog = "".join(f"<p>{p.strip()}</p>" for p in blog_paragraphs if p.strip())
+
+        post_body = f'<div>{header_html}</div><div>{formatted_blog}</div>'
         post_to_wordpress(final_title, post_body, featured_media=media_id)
 
         print("Done")
