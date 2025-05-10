@@ -11,7 +11,7 @@ from openai import OpenAIError
 # Custom utilities
 import image_utils
 from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
-from blog_writer import generate_blog_sections
+from blog_writer import generate_blog_sections  # <-- importing your preferred logic
 
 # Load credentials
 load_dotenv()
@@ -22,10 +22,16 @@ WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
+def ordinal(n: int) -> str:
+    if 11 <= (n % 100) <= 13:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
 
 def clean_text(text: str) -> str:
-    text = re.sub(r'\^[A-Z0-9\.\-]+', '', text)
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'\^[A-Z0-9\.\-]+', '', text)  # Remove tickers
+    text = re.sub(r'\s+', ' ', text)             # Normalize spacing
     return text.strip()
 
 def log_blog_to_history(blog_content: str):
@@ -45,7 +51,7 @@ def generate_blog(market_summary: str, total_sections: int = 5):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Summarize the blog and generate a strong video narration summary."},
+                {"role": "system", "content": "Summarize the blog for video narration."},
                 {"role": "user", "content": blog_text}
             ],
             temperature=0.6,
@@ -158,7 +164,6 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        # Split into sections based on Section markers
         section_blocks = re.split(r'(Section \d+:)', blog_text)
         formatted_blog = ""
         for i in range(1, len(section_blocks), 2):
