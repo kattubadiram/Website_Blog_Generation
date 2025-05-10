@@ -51,10 +51,9 @@ def generate_blog(market_summary: str, total_sections: int = 5):
             f"You are a professional financial journalist writing a long-form market blog.\n\n"
             f"MARKET SNAPSHOT:\n{market_text}\n\n"
             f"Write section {section_index + 1} of {total_sections}. Each section should be 400–500 words.\n"
-            "- Create a clear, relevant heading.\n"
+            "- Start the section with: 'Section {section_index + 1}: [Heading Title]'\n"
             "- Do not repeat information from earlier sections.\n"
-            "- Use journalistic flow and analysis.\n"
-            "- First section: introduce context. Final section: conclude or project outlook.\n"
+            "- Use clear paragraph breaks (double newline between paragraphs).\n"
         )
 
     def generate_section(prompt: str) -> str:
@@ -184,7 +183,7 @@ if __name__ == "__main__":
         market_summary = summarize_market_snapshot(snapshot)
 
         print("Generating blog content...")
-        blog_text, summary_text, base_title = generate_blog(market_summary, total_sections=4)
+        blog_text, summary_text, base_title = generate_blog(market_summary, total_sections=2)
 
         print("Fetching and uploading blog poster via Unsplash...")
         media_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
@@ -208,9 +207,15 @@ if __name__ == "__main__":
             '</div>'
         )
 
-        # Format blog into HTML paragraphs
-        blog_paragraphs = blog_text.strip().split("\n")
-        formatted_blog = "".join(f"<p>{p.strip()}</p>" for p in blog_paragraphs if p.strip())
+        # Split into sections based on Section markers
+        section_blocks = re.split(r'(Section \d+:)', blog_text)
+        formatted_blog = ""
+        for i in range(1, len(section_blocks), 2):
+            heading = section_blocks[i]
+            body = section_blocks[i + 1]
+            paragraphs = re.split(r'\n{2,}|\.\s+', body.strip())
+            formatted_paragraphs = "".join(f"<p>{p.strip()}.</p>" for p in paragraphs if p.strip())
+            formatted_blog += f"<h2>{heading.strip()}</h2>{formatted_paragraphs}"
 
         post_body = f'<div>{header_html}</div><div>{formatted_blog}</div>'
         post_to_wordpress(final_title, post_body, featured_media=media_id)
