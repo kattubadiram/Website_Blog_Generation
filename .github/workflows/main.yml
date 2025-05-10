@@ -73,11 +73,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      - name: Generate video voiceover
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python generate_audio_for_video.py
-
       - name: Generate avatar video
         run: .venv/bin/python generate_video_heygen.py
         env:
