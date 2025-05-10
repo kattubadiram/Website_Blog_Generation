@@ -39,11 +39,8 @@ jobs:
             moviepy==1.0.3 yfinance feedparser \
             google-cloud-texttospeech gtts
 
-      - name: Fetch market data and save snapshot
-        run: .venv/bin/python market_snapshot_fetcher.py
-
       - name: Run blog and summary generator
-        run: .venv/bin/python final.py
+        run: .venv/bin/python science.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
