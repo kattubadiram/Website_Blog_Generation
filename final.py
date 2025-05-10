@@ -55,12 +55,13 @@ def generate_blog(market_summary: str, section_count: int = 1):
 
     for i in range(section_count):
         system_msg = {
-            "role": "system",
-            "content": (
-                f"You are a senior financial journalist. Write the section titled '{section_titles[i]}'.\n\n"
-                "Each section should be around 250 words, professional, analytical, and based only on the summary provided.\n"
-                "Avoid repetition, and do not use headings in the output.\n"
-                f"{'Begin the first section with this exact sentence:\n' + today_line if i == 0 else ''}"
+        "role": "system",
+        "content": (
+            f"You are a senior financial journalist. Write the section titled '{section_titles[i]}'.\n\n"
+            "Each section should be around 250 words, professional, analytical, and based only on the summary provided.\n"
+            "Avoid repetition, and do not use headings in the output.\n"
+            "Do not include any symbols like the caret (^) or stock/index tickers.\n"
+            f"{'Begin the first section with this exact sentence:\n' + today_line if i == 0 else ''}"
             )
         }
         messages = [
