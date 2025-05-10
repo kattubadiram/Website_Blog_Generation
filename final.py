@@ -213,8 +213,8 @@ if __name__ == "__main__":
         for i in range(1, len(section_blocks), 2):
             heading = section_blocks[i]
             body = section_blocks[i + 1]
-            paragraphs = re.split(r'\n{2,}|\.\s+', body.strip())
-            formatted_paragraphs = "".join(f"<p>{p.strip()}.</p>" for p in paragraphs if p.strip())
+            paragraphs = body.strip().split("\n\n")
+            formatted_paragraphs = "".join(f"<p>{p.strip()}</p>" for p in paragraphs if p.strip())
             formatted_blog += f"<h2>{heading.strip()}</h2>{formatted_paragraphs}"
 
         post_body = f'<div>{header_html}</div><div>{formatted_blog}</div>'
