@@ -11,6 +11,7 @@ from openai import OpenAIError
 # Custom utilities
 import image_utils
 from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
+from blog_writer import generate_blog_sections
 
 # Load credentials
 load_dotenv()
@@ -21,17 +22,9 @@ WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-def ordinal(n: int) -> str:
-    if 11 <= (n % 100) <= 13:
-        suffix = "th"
-    else:
-        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{suffix}"
 
 def clean_text(text: str) -> str:
-    # Remove Yahoo Finance tickers like ^GSPC or ^N225
     text = re.sub(r'\^[A-Z0-9\.\-]+', '', text)
-    # Normalize spacing
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
@@ -46,68 +39,26 @@ def log_blog_to_history(blog_content: str):
     print("Logged to", LOG_FILE)
 
 def generate_blog(market_summary: str, total_sections: int = 5):
-    def build_section_prompt(market_text: str, section_index: int, total_sections: int) -> str:
-        return (
-            f"You are a professional financial journalist writing a long-form market blog.\n\n"
-            f"MARKET SNAPSHOT:\n{market_text}\n\n"
-            f"Write section {section_index + 1} of {total_sections}. Each section should be 400–500 words.\n"
-            "- Start the section with: 'Section {section_index + 1}: [Heading Title]'\n"
-            "- Do not repeat information from earlier sections.\n"
-            "- Use clear paragraph breaks (double newline between paragraphs).\n"
-        )
-
-    def generate_section(prompt: str) -> str:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a skilled financial blog writer."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-        return response.choices[0].message.content.strip()
-
-    est = pytz.timezone("America/New_York")
-    now_est = datetime.now(pytz.utc).astimezone(est)
-    weekday = now_est.strftime("%A")
-    day_number = now_est.day
-    month_name = now_est.strftime("%B")
-    year = now_est.year
-    day_ord = ordinal(day_number)
-    intro_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
-
-    blog_parts = []
-    clean_summary = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary)
-    for i in range(total_sections):
-        print(f"[{i+1}/{total_sections}] Generating section...")
-        prompt = build_section_prompt(clean_summary, i, total_sections)
-        section = generate_section(prompt)
-        blog_parts.append(section)
-
-    full_blog = "\n\n".join(blog_parts)
-    blog = f"{intro_line}\n\n{full_blog}"
-    blog = clean_text(blog)
+    blog_text, title = generate_blog_sections(market_summary, total_sections)
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Summarize the blog and generate a strong title."},
-                {"role": "user", "content": blog}
+                {"role": "system", "content": "Summarize the blog and generate a strong video narration summary."},
+                {"role": "user", "content": blog_text}
             ],
             temperature=0.6,
             response_format={"type": "json_object"}
         )
         data = json.loads(response.choices[0].message.content)
         summary = clean_text(data.get("summary", "SUMMARY: Financial markets were active today...").strip())
-        title = clean_text(data.get("title", "Market Trends and Investor Outlook").strip())
     except Exception as e:
-        print(f"Failed to generate summary/title: {e}")
+        print(f"Failed to generate summary: {e}")
         summary = "SUMMARY: Financial markets were active today..."
-        title = "Market Trends and Investor Outlook"
 
-    log_blog_to_history(blog)
-    return blog, summary, title
+    log_blog_to_history(blog_text)
+    return blog_text, summary, title
 
 def save_local(blog: str, summary: str):
     try:
