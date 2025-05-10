@@ -28,6 +28,11 @@ def ordinal(n: int) -> str:
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
     return f"{n}{suffix}"
 
+def clean_text(text: str) -> str:
+    text = re.sub(r'[^\x00-\x7F]+', '', text)  # Remove non-ASCII
+    text = re.sub(r'\s+', ' ', text)           # Normalize whitespace
+    return text.strip()
+
 def log_blog_to_history(blog_content: str):
     LOG_FILE = "blog_history.txt"
     ts = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York')) \
@@ -80,6 +85,7 @@ def generate_blog(market_summary: str, total_sections: int = 5):
 
     full_blog = "\n\n".join(blog_parts)
     blog = f"{intro_line}\n\n{full_blog}"
+    blog = clean_text(blog)
 
     try:
         response = client.chat.completions.create(
@@ -92,8 +98,8 @@ def generate_blog(market_summary: str, total_sections: int = 5):
             response_format={"type": "json_object"}
         )
         data = json.loads(response.choices[0].message.content)
-        summary = data.get("summary", "SUMMARY: Financial markets were active today...").strip()
-        title = data.get("title", "Market Trends and Investor Outlook").strip()
+        summary = clean_text(data.get("summary", "SUMMARY: Financial markets were active today...").strip())
+        title = clean_text(data.get("title", "Market Trends and Investor Outlook").strip())
     except Exception as e:
         print(f"Failed to generate summary/title: {e}")
         summary = "SUMMARY: Financial markets were active today..."
@@ -104,6 +110,8 @@ def generate_blog(market_summary: str, total_sections: int = 5):
 
 def save_local(blog: str, summary: str):
     try:
+        blog = clean_text(blog)
+        summary = clean_text(summary)
         with open("blog_summary.txt", "w") as f:
             f.write(summary)
         with open("blog_post.txt", "w") as f:
@@ -134,7 +142,7 @@ def generate_video_prompt(summary_text):
             ],
             temperature=0.6
         )
-        pure_narration = response.choices[0].message.content.strip()
+        pure_narration = clean_text(response.choices[0].message.content.strip())
         fixed_intro = "This news is brought to you by Preeti Capital, your trusted source for financial insights."
         narration = f"{fixed_intro} {pure_narration}"
 
@@ -148,6 +156,8 @@ def generate_video_prompt(summary_text):
 
 def post_to_wordpress(title: str, content: str, featured_media: int):
     try:
+        title = clean_text(title)
+        content = clean_text(content)
         payload = {
             "title": title,
             "content": content,
@@ -197,8 +207,6 @@ if __name__ == "__main__":
         )
 
         post_body = f'<div>{header_html}</div><div>{blog_text}</div>'
-
-        print("Publishing to WordPress...")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
 
         print("Done")
