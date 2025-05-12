@@ -42,7 +42,7 @@ jobs:
             google-cloud-texttospeech gtts
 
       - name: Run blog and summary generator
-        run: .venv/bin/python science.py
+        run: .venv/bin/python finance.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
