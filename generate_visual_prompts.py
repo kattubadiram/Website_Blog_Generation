@@ -23,45 +23,29 @@ def load_narration():
         print("Error: video_prompt.txt not found.")
         return ""
 
-
 # -------------------------
 # Split narration into individual sentences (scenes)
 # -------------------------
 def split_into_scenes(script_text):
     import re
-    # Split by sentence-ending punctuation followed by space
     return [s.strip() for s in re.split(r'(?<=[.?!])\s+', script_text) if s.strip()]
 
-
 # -------------------------
-# Convert narration sentence into a DALL·E-style visual prompt
+# Convert narration sentence into a simplified iconographic visual prompt
 # -------------------------
 def generate_visual_prompt(sentence):
     system_msg = (
-        "You are a professional visual prompt engineer for DALL·E image generation, specializing in high-quality, cinematic, Sci-Fi/VFX themed financial short-form videos. "
-        "Your job is to convert narration lines into single-scene, visually stunning image prompts that capture the full essence, sentiment, and mood of the narration. "
-        "Focus on finance, business, or economics within a futuristic or enhanced reality setting. "
-        "Use concrete nouns, vivid adjectives, symbolic props, and clear emotional tone. "
-        "Ensure symbolic elements like market indicators or futuristic objects are integrated logically, not randomly placed. Avoid depictions of real animals used purely as abstract symbols (like bulls or bears). "
-        "Keep prompts highly detailed, cinematic, and under 200 words, without using text or numeric overlays.\n\n"
-        "Example 1:\n"
-        "Narration: 'The Federal Reserve raised rates today.'\n"
-        "Prompt: A grand, futuristic Federal Reserve building beneath a dark, swirling nebula, an imposing upward energy beam integrated into its sleek, chrome columns. Anxious cyborg traders stand nearby, their expressions illuminated by holographic displays, casting long, neon shadows. Powerful gusts of cosmic wind ripple through metallic flags, reinforcing the feeling of tightened economic conditions and market caution. Cinematic wide shot.\n\n"
-        "Example 2:\n"
-        "Narration: 'Tesla led the rally with a significant surge.'\n"
-        "Prompt: A bright, bustling stock exchange floor bathed in optimistic, otherworldly light, with a gleaming Tesla Cybertruck prominently displayed under pulsating laser spotlights. Enthusiastic traders surround it, their faces lit by vibrant holographic tickers, conveying excitement and renewed confidence. High-energy cinematic scene.\n\n"
-        "Example 3:\n"
-        "Narration: 'Oil prices dropped sharply, dragging energy stocks lower.'\n"
-        "Prompt: A striking silhouette of an offshore oil rig at dusk, amidst rough, bioluminescent seas and dark, swirling storm clouds. Oil barrels plunge dramatically into turbulent waves below, leaving trails of energy. Distant, fading red holographic chart lines subtly weave into the background, illustrating declining market sentiment and concern within the energy sector. Dramatic wide shot.\n\n"
-        "Example 4:\n"
-        "Narration: 'Tech stocks rebounded after days of losses.'\n"
-        "Prompt: A contemporary, glass-skyscraper-filled Silicon Valley skyline glowing softly at dawn with holographic projections. In the foreground, a high-tech drone rises confidently from charred circuit board remnants, symbolizing a phoenix-like recovery. Tech workers holding digital tablets look upward with cautious optimism, faint green market indicators illuminating their screens. Optimistic dawn lighting, cinematic angle.\n\n"
-        "Example 5:\n"
-        "Narration: 'Pfizer climbed amid renewed interest in healthcare.'\n"
-        "Prompt: A modern, futuristic laboratory brightly illuminated with cool, blue-white neon lights, showcasing a scientist holding a vial emitting a gentle blue glow, subtly branded Pfizer. Behind, a futuristic DNA helix of blue light spirals upward, while monitors embedded in sleek glass walls show signs of increasing investment enthusiasm. Clean, high-tech aesthetic, cinematic lighting.\n\n"
-        "Example 6:\n"
-        "Narration: 'Gold rose as investors sought safety.'\n"
-        "Prompt: A dimly lit, secure, Sci-Fi vault filled with stacks of gleaming gold bars, softly illuminated by a single, hovering light orb. An investor in a tailored suit steps in from a stormy, holographic exterior, looking at the gold with evident relief and security. Reflections on the polished floor subtly echo a volatile market atmosphere outside. Secure, tense atmosphere, cinematic composition.\n"
+        "You are a visual prompt generator for DALL·E, focused on producing ultra-simple, clear, minimalistic image prompts for financial news narration. "
+        "Each prompt must describe exactly one scene using very few elements — ideally just the core subject (like a stock symbol, asset type, or company logo) and a visual indicator of movement (like a red down arrow or green up arrow). "
+        "Avoid any background storytelling, human characters, emotions, or environment descriptions. "
+        "Do not include text, percentages, or numbers in the image. "
+        "Your prompts should read like:\n"
+        "- 'A gold bar with a green up arrow above it on a plain white background.'\n"
+        "- 'The SPY ETF logo with a red down arrow next to it on a clean background.'\n"
+        "- 'An oil barrel with a red down arrow.'\n"
+        "- 'A Tesla car with a green up arrow.'\n"
+        "- 'A stack of dollar bills with a red down arrow.'\n\n"
+        "Always keep it symbolic, literal, and minimalistic. Avoid clutter."
     )
 
     user_prompt = f"NARRATION: {sentence}\n\nVISUAL PROMPT:"
@@ -73,17 +57,13 @@ def generate_visual_prompt(sentence):
                 {"role": "system", "content": system_msg},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.4 # Keep temperature relatively low for consistent prompt style
+            temperature=0.3
         )
         return response.choices[0].message.content.strip()
 
     except Exception as e:
         print(f"Error generating visual prompt: {e}")
-        # Fallback prompt updated to match the new Sci-Fi/VFX theme if API fails
-        fallback_prompt = (
-            "A high-quality, cinematic image of a futuristic trading floor with glowing holographic monitors displaying abstract market trends, "
-            "incorporating Sci-Fi elements and a clear emotional tone related to finance. Avoid text overlays."
-        )
+        fallback_prompt = "A simple visual of a financial logo with an up or down arrow."
         print("Using fallback prompt instead.")
         return fallback_prompt
 
