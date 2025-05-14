@@ -1,8 +1,6 @@
 name: Science Blog
 
 on:
-  schedule:
-    - cron: '00 7 * * *'  # Runs daily at 4:40 AM EST (9:40 AM UTC)
   workflow_dispatch:      # Manual trigger also allowed
 
 permissions:
