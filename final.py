@@ -38,7 +38,7 @@ def log_blog_to_history(blog_content: str):
         f.write(entry)
     print("Logged to", LOG_FILE)
 
-def generate_blog(market_summary: str, section_count: int = 1):
+def generate_blog(market_summary: dict, section_count: int = 1):
     est = pytz.timezone("America/New_York")
     now_est = datetime.now(pytz.utc).astimezone(est)
     weekday    = now_est.strftime("%A")
@@ -49,25 +49,26 @@ def generate_blog(market_summary: str, section_count: int = 1):
 
     today_line = f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | This news is brought to you by Preeti Capital, your trusted source for financial insights."
 
-    clean_summary = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary)
+    section_keys = [
+        "headline", "indices", "bonds", "currencies", "commodities",
+        "etfs", "stocks", "tech_focus", "global_insights",
+        "analyst_angle", "sector_spotlight", "risks_and_opportunities"
+    ]
     blog_sections = []
-    section_titles = [f"Section {i+1}" for i in range(section_count)]
 
-    for i in range(section_count):
+    for idx, key in enumerate(section_keys[:section_count]):
+        title = key.replace("_", " ").title()
+        clean_text = re.sub(r'\(\^[A-Z0-9\.\-]+\)', '', market_summary.get(key, ""))
         system_msg = {
-        "role": "system",
-        "content": (
-            f"You are a senior financial journalist. Write the section titled '{section_titles[i]}'.\n\n"
-            "Each section should be around 250 words, professional, analytical, and based only on the summary provided.\n"
-            "Avoid repetition, and do not use headings in the output.\n"
-            "Do not include any symbols like the caret (^) or stock/index tickers.\n"
-            f"{'Begin the first section with this exact sentence:\n' + today_line if i == 0 else ''}"
+            "role": "system",
+            "content": (
+                f"You are a senior financial journalist. Write the section titled '{title}'.\n\n"
+                "Each section should be around 250–350 words, professional, analytical, and based only on the provided content.\n"
+                "Avoid repetition. Do not use headings or ticker symbols in the output.\n"
+                f"{'Begin the first section with this exact sentence:\n' + today_line if idx == 0 else ''}"
             )
         }
-        messages = [
-            system_msg,
-            {"role": "user", "content": clean_summary}
-        ]
+        messages = [system_msg, {"role": "user", "content": clean_text}]
         try:
             resp = client.chat.completions.create(
                 model="gpt-4o",
@@ -77,7 +78,7 @@ def generate_blog(market_summary: str, section_count: int = 1):
             section_text = resp.choices[0].message.content.strip()
             blog_sections.append(section_text)
         except OpenAIError as e:
-            print(f"[!] Section {i+1} failed: {e}")
+            print(f"[!] Section {title} failed: {e}")
             blog_sections.append("Content temporarily unavailable.")
 
     full_blog = "\n\n".join(blog_sections)
@@ -177,8 +178,8 @@ if __name__ == "__main__":
         append_snapshot_to_log(snapshot)
         market_summary  = summarize_market_snapshot(snapshot)
 
-        # 🔧 Adjust section_count here
-        section_count = 2  # For 2,500-word blog (1 section = ~250 words)
+        # 🔧 Choose how many sections to generate — up to 12
+        section_count = 8  # ~250–350 words per section
 
         print(f"Generating blog content with {section_count} sections...")
         blog_text, summary_text, base_title = generate_blog(market_summary, section_count=section_count)
