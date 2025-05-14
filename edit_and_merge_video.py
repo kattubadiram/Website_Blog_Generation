@@ -12,12 +12,15 @@ from PIL import Image, ImageDraw, ImageFont
 # -------------------------
 AVATAR_VIDEO = 'avatar_video.mp4'
 IMAGES_FOLDER = 'ai_images/'
-FINAL_VIDEO = 'video_output.mp4'
+FINAL_VIDEO = 'video_output_shorts.mp4'
 
 FRAME_RATE = 24
 SHOW_IMAGE_EVERY = 6        # Seconds between image overlays
 IMAGE_DURATION = 3          # Duration each image stays on screen
 IMAGE_FADE = 0.5            # Duration of fade in/out for each image
+SHORTS_WIDTH = 1080
+SHORTS_HEIGHT = 1920
+MAX_DURATION = 60           # Shorts must be less than or equal to 60s
 
 # -------------------------
 # Create a transparent image with timestamp text
@@ -27,12 +30,12 @@ def create_text_overlay(text, width, height):
     draw = ImageDraw.Draw(img)
 
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 24
+    font_size = 36
     font = ImageFont.truetype(font_path, font_size)
 
     text_width, text_height = draw.textsize(text, font=font)
-    x = width - text_width - 20
-    y = 20
+    x = width - text_width - 40
+    y = 40
 
     draw.text((x, y), text, font=font, fill=(255, 255, 255, 255))
     return np.array(img)
@@ -41,10 +44,12 @@ def create_text_overlay(text, width, height):
 # Create final video with image overlays and timestamp
 # -------------------------
 def create_overlay_cutaway_video():
-    # Load avatar video and extract metadata
-    avatar_clip = VideoFileClip(AVATAR_VIDEO)
-    avatar_duration = avatar_clip.duration
-    video_width, video_height = avatar_clip.size
+    # Load avatar video
+    avatar_clip = VideoFileClip(AVATAR_VIDEO).resize((SHORTS_WIDTH, SHORTS_HEIGHT))
+    
+    # Limit duration to 60 seconds (Shorts requirement)
+    avatar_duration = min(avatar_clip.duration, MAX_DURATION)
+    avatar_clip = avatar_clip.subclip(0, avatar_duration)
 
     # Collect overlay images
     images = sorted([
@@ -54,17 +59,17 @@ def create_overlay_cutaway_video():
     if not images:
         raise Exception("No images found in 'ai_images/' folder.")
 
-    # Determine when to show each overlay image
+    # Schedule overlay image times
     overlay_times = list(range(SHOW_IMAGE_EVERY, int(avatar_duration), SHOW_IMAGE_EVERY))
     extended_images = (images * ((len(overlay_times) // len(images)) + 1))[:len(overlay_times)]
 
-    # Create list of overlay image clips
+    # Create overlay image clips
     overlays = []
     for time_sec, img_file in zip(overlay_times, extended_images):
         img_path = os.path.join(IMAGES_FOLDER, img_file)
         img_clip = (
             ImageClip(img_path)
-            .resize((video_width, video_height))
+            .resize((SHORTS_WIDTH, SHORTS_HEIGHT))
             .set_start(time_sec)
             .set_duration(IMAGE_DURATION)
             .crossfadein(IMAGE_FADE)
@@ -72,22 +77,28 @@ def create_overlay_cutaway_video():
         )
         overlays.append(img_clip)
 
-    # Generate timestamp overlay using Eastern Time
+    # Create timestamp overlay in Eastern Time
     now = datetime.now(ZoneInfo("America/New_York"))
     datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p ET")
-
-    text_image_array = create_text_overlay(datetime_text, video_width, video_height)
+    text_image_array = create_text_overlay(datetime_text, SHORTS_WIDTH, SHORTS_HEIGHT)
     text_image_clip = ImageClip(text_image_array, ismask=False).set_duration(avatar_duration)
 
-    # Combine avatar video, timestamp, and image overlays
+    # Combine everything into one composite clip
     final = CompositeVideoClip(
         [avatar_clip, text_image_clip] + overlays,
-        size=(video_width, video_height)
+        size=(SHORTS_WIDTH, SHORTS_HEIGHT)
     ).set_audio(avatar_clip.audio)
 
-    # Write final output video
-    final.write_videofile(FINAL_VIDEO, fps=FRAME_RATE, codec="libx264", audio_codec="aac")
-    print(f"Final video created: {FINAL_VIDEO}")
+    # Export the final video
+    final.write_videofile(
+        FINAL_VIDEO,
+        fps=FRAME_RATE,
+        codec="libx264",
+        audio_codec="aac",
+        preset="ultrafast",
+        threads=4
+    )
+    print(f"Shorts-ready video created: {FINAL_VIDEO}")
 
 # -------------------------
 # Entry point
