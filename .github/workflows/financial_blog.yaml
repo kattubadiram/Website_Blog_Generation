@@ -1,8 +1,8 @@
 name: Finance Blog Extended
 
 on:
-  schedule:
-    - cron: '30 8 * * *'  # Runs daily at 3:30 AM EST (9:40 AM UTC)
+  #schedule:
+    #- cron: '30 8 * * *'  # Runs daily at 3:30 AM EST (9:40 AM UTC)
   workflow_dispatch:      # Manual trigger also allowed
 
 permissions:
