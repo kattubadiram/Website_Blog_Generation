@@ -1,0 +1,52 @@
+name: Audio for file.txt
+
+on:
+  workflow_dispatch:  # Trigger manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  post-audio:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
+          python3 -m venv .venv
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/audio_for_file.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools
+          .venv/bin/pip install --no-cache-dir \
+            google-cloud-texttospeech requests pillow
+
+      - name: Write Google credentials to file
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+
+      - name: Generate audio from file.txt
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
+          .venv/bin/python audio_for_file.py
+
+      - name: Upload generated audio to WordPress
+        run: .venv/bin/python upload_audio_and_embed.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
