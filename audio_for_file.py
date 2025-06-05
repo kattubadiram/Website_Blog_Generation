@@ -20,13 +20,17 @@ def generate_audio():
         credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
         print(f"Using credentials from: {credentials_path}")
-        
+
         # Step 2: Read text from file.txt
-        if not os.path.exists("file.txt"):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        input_path = os.path.join(script_dir, "file.txt")
+        output_path = os.path.join(script_dir, "file_voiceover.mp3")
+
+        if not os.path.exists(input_path):
             print("❌ file.txt not found")
             blog_text = "This is an automated voiceover. Please check our website for the full content."
         else:
-            with open("file.txt", "r", encoding="utf-8") as f:
+            with open(input_path, "r", encoding="utf-8") as f:
                 blog_text = f.read()
             print(f"✅ Loaded text from file.txt ({len(blog_text)} characters)")
 
@@ -59,15 +63,15 @@ def generate_audio():
             )
             audio_segments.append(response.audio_content)
 
-        with open("file_voiceover.mp3", "wb") as out:
+        with open(output_path, "wb") as out:
             for segment in audio_segments:
                 out.write(segment)
-        print("✅ Voiceover saved as file_voiceover.mp3")
+        print(f"✅ Voiceover saved as {output_path}")
 
     except Exception as e:
         print(f"❌ Error generating audio: {e}")
         try:
-            with open("file_voiceover.mp3", "wb") as f:
+            with open(output_path, "wb") as f:
                 silent_mp3 = b'\xFF\xE3\x18\xC4\x00\x00\x00\x03H\x00\x00\x00\x00LAME3.100\x00' + b'\x00' * 50
                 f.write(silent_mp3)
             print("⚠️ Created fallback silent audio file")
