@@ -1,7 +1,7 @@
 name: Audio for file.txt
 
 on:
-  workflow_dispatch:  # Trigger manually from the Actions tab
+  workflow_dispatch:  # Trigger manually from the GitHub UI
 
 permissions:
   contents: write
@@ -32,7 +32,8 @@ jobs:
         run: |
           .venv/bin/pip install --upgrade pip setuptools
           .venv/bin/pip install --no-cache-dir \
-            google-cloud-texttospeech requests pillow
+            google-cloud-texttospeech requests pillow \
+            python-dotenv
 
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
