@@ -45,9 +45,3 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python audio_for_file.py
 
-      - name: Upload generated audio to WordPress
-        run: .venv/bin/python upload_audio_and_embed.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
