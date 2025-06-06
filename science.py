@@ -56,7 +56,7 @@ def generate_blog(market_summary: str, section_count: int = 1):
         system_msg = {
             "role": "system",
             "content": (
-                f"You are a senior science and technology journalist writing for a well-informed audience about "Japanese scientists have developed a universal artificial blood, also known as "universal blood," that is compatible with all blood types.". Write the section titled '{section_titles[i]}'.\n\n"
+                f"You are a senior science and technology journalist writing for a well-informed audience about Japanese scientists have developed a universal artificial blood, also known as "universal blood" that is compatible with all blood types. Write the section titled '{section_titles[i]}'.\n\n"
                 "Each section should be around 250 words, based only on verified scientific or technological facts. "
                 "Use your internal knowledge base but avoid speculation or fictional data. "
                 "Maintain a clear, factual, and analytical tone. "
