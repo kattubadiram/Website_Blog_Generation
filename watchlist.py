@@ -10,6 +10,21 @@ import pathlib
 import time
 from typing import Dict, List, Optional
 
+import datetime as dt
+import importlib.util
+import json
+import pathlib
+import time
+from typing import Dict, List, Optional
+
+import feedparser
+import pandas as pd
+import requests
+import yfinance as yf
+from transformers import logging as tf_logging, pipeline, Pipeline
+
+from article_extractor import extract_article_text
+
 import feedparser
 import pandas as pd
 import requests
