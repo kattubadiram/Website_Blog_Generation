@@ -11,7 +11,7 @@ import datetime as dt
 import json
 import pathlib
 import time
-from typing import Dict
+from typing import Dict, List
 
 from transformers import pipeline, Pipeline
 import importlib
