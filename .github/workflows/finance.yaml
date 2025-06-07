@@ -1,8 +1,8 @@
-name: Finance Blog 
+name: Finance Blog Extended
 
 on:
   schedule:
-    # 06:02 AM New-York time (GitHub cron uses UTC)
+    # 06:02 AM New-York time (GitHub cron runs on UTC)
     - cron: '2 10 * * *'
   workflow_dispatch:
 
@@ -37,13 +37,19 @@ jobs:
       - name: Install Python dependencies
         run: |
           .venv/bin/pip install --upgrade pip setuptools
+
+          # 1️⃣  Everything from the default PyPI index
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
             moviepy==1.0.3 yfinance feedparser pandas ta \
             beautifulsoup4 readability-lxml lxml \
-            torch --index-url https://download.pytorch.org/whl/cpu \
             google-cloud-texttospeech gtts
+
+          # 2️⃣  CPU-only PyTorch from its own wheel index
+          .venv/bin/pip install --no-cache-dir \
+            --index-url https://download.pytorch.org/whl/cpu \
+            torch
 
       # ─────────────────── Data collection phase ────────────────────
       - name: Fetch breadth / trend data
@@ -55,7 +61,7 @@ jobs:
       - name: Build watchlist
         run: .venv/bin/python watchlist.py
 
-      # Optional snapshot (kept from original flow)
+      # Optional extra snapshot (kept from original flow)
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
 
@@ -68,7 +74,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # ─────────────────── GCP credentials & voiceover ──────────────
+      # ─────────────────── GCP credentials & voice-over ─────────────
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
@@ -79,11 +85,11 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python - <<'PY'
           from google.cloud import texttospeech
-          client = texttospeech.TextToSpeechClient()
-          print("Google Cloud auth works")
+          texttospeech.TextToSpeechClient()
+          print("Google Cloud auth OK")
           PY
 
-      - name: Generate blog voiceover
+      - name: Generate blog voice-over
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
@@ -110,6 +116,6 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add blog_history.txt market_snapshot_log.jsonl
-          git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
+          git commit -m "Update history logs [skip ci]" || echo "No changes"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
