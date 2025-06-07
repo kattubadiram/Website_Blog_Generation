@@ -13,6 +13,7 @@ import pathlib
 import time
 from typing import Dict
 
+from transformers import pipeline, Pipeline
 import importlib
 import pandas as pd
 import yfinance as yf
