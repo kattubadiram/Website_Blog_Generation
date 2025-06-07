@@ -1,136 +1,129 @@
 #!/usr/bin/env python3
 """
-modular_blog.py  –  Generate a single-section (250-350 words) financial blog
-from the four data feeds produced by trend.py, pulse.py, movers.py, watchlist.py.
-
-• Keeps the **identical first sentence** format you already use.
-• Writes   blog_post.txt, blog_summary.txt, video_prompt.txt   so the
-  downstream audio/video steps keep working unchanged.
+modular_blog.py – four-section (≈250-300 words each) market blog builder
+Reads   data/<DATE>/{breadth,pulse,movers,watchlist}.json
+Writes  blog_post.txt, blog_summary.txt, video_prompt.txt
+Publishes to WordPress via post_to_wordpress() imported from final.py
 """
 
-import json, os, re, pytz, sys
+import json, os, sys
+from pathlib import Path
 from datetime import datetime, timezone
-from pathlib   import Path
-from dotenv    import load_dotenv
-import openai, requests
+
+import pytz, openai
+from dotenv import load_dotenv
 from openai import OpenAIError
 
-# ─────────────────────────── ENV & CONSTANTS ────────────────────────────
-load_dotenv()
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
-WP_USERNAME      = os.getenv("WP_USERNAME")      # only used for poster upload
-WP_APP_PASSWORD  = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL      = os.getenv("WP_SITE_URL")
-client           = openai.OpenAI(api_key=OPENAI_API_KEY)
+# ───── env ─────────────────────────────────────────────────────────────
+load_dotenv()                              # harmless if .env is absent
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-EST  = pytz.timezone("America/New_York")
+# WordPress helpers live in final.py – import without running its main()
+from final import generate_video_prompt, post_to_wordpress   # noqa: E402
+
+EST = pytz.timezone("America/New_York")
 TODAY_EST = datetime.now(timezone.utc).astimezone(EST).date()
 
-# ─────────────────────────── HELPERS ────────────────────────────────────
+SECTIONS = [
+    ("Trend Check",   "breadth.json"),
+    ("Market Pulse",  "pulse.json"),
+    ("Top Movers",    "movers.json"),
+    ("Stocks to Watch", "watchlist.json"),
+]
+
+# ───── helpers ─────────────────────────────────────────────────────────
 def ordinal(n: int) -> str:
     return f"{n}{'th' if 11<=n%100<=13 else {1:'st',2:'nd',3:'rd'}.get(n%10,'th')}"
 
-def load_json(path: Path) -> dict:
-    if not path.is_file():
+def banner() -> str:
+    now = datetime.now(timezone.utc).astimezone(EST)
+    return (f"Today is {now:%A}, {ordinal(now.day)} of {now:%B} {now.year} Eastern Time | "
+            "This news is brought to you by Preeti Capital, your trusted source for financial insights.")
+
+def load_blob(path: Path) -> dict:
+    if not path.exists():
         print(f"[!] Missing {path}")
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
 
-def first_line() -> str:
-    now = datetime.now(timezone.utc).astimezone(EST)
-    weekday, month, year, day = now.strftime("%A"), now.strftime("%B"), now.year, now.day
-    return (f"Today is {weekday}, {ordinal(day)} of {month} {year} Eastern Time | "
-            "This news is brought to you by Preeti Capital, your trusted source for financial insights.")
+def write(path: str, txt: str) -> None:
+    Path(path).write_text(txt, encoding="utf-8")
 
-def save_local(blog: str, summary: str):
-    Path("blog_post.txt").write_text(blog, encoding="utf-8")
-    Path("blog_summary.txt").write_text(summary, encoding="utf-8")
-    print("✅ Saved blog_post.txt & blog_summary.txt")
+# ───── main ────────────────────────────────────────────────────────────
+def main(date_iso: str | None = None) -> None:
+    folder = Path("data") / (date_iso or str(TODAY_EST))
+    folder.mkdir(parents=True, exist_ok=True)
 
-def save_video_prompt(summary: str):
-    system = ("You are a professional scriptwriter for short financial news videos targeted at investors. "
-              "Write exactly 2 short, impactful sentences summarizing the financial situation based on the given summary. "
-              "Do NOT include any introduction like 'This news is brought to you by Preeti Capital'.")
-    resp = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role":"system","content":system},
-                  {"role":"user","content":summary}],
-        temperature=0.6
-    )
-    narration = ( "This news is brought to you by Preeti Capital, your trusted source for financial insights. "
-                  + resp.choices[0].message.content.strip())
-    Path("video_prompt.txt").write_text(narration, encoding="utf-8")
-    print("✅ Saved video_prompt.txt")
-
-# ─────────────────────────── MAIN ───────────────────────────────────────
-def main(date_iso: str|None = None):
-    # pick folder  data/YYYY-MM-DD/   (default = today EST)
-    folder_date = date_iso or str(TODAY_EST)
-    data_dir = Path("data") / folder_date
-    trend     = load_json(data_dir / "breadth.json")
-    pulse     = load_json(data_dir / "pulse.json")
-    movers    = load_json(data_dir / "movers.json")
-    watchlist = load_json(data_dir / "watchlist.json")
-
-    # Concatenate raw content for the LLM
-    raw = {
-        "trend"    : json.dumps(trend),
-        "pulse"    : json.dumps(pulse),
-        "movers"   : json.dumps(movers),
-        "watchlist": json.dumps(watchlist),
-    }
-    combined_text = "\n\n".join(f"{k.upper()}:\n{v}" for k,v in raw.items())
-
-    # ── Compose single 250-350 word section ────────────────────────────
-    section_title = "Market Overview"
-    sys_prompt = (f"You are a senior financial journalist. Write a {section_title} section around 250-350 words, "
-                  "professional and analytical, based ONLY on the provided JSON-like data. "
-                  "Avoid repetition. Do not include headings or ticker symbols in the output.")
-    messages = [{"role":"system","content":sys_prompt},
-                {"role":"user","content":combined_text}]
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.7
+    # build each section
+    sections_out = []
+    for idx, (title, fname) in enumerate(SECTIONS):
+        raw = json.dumps(load_blob(folder / fname))
+        sys_prompt = (
+            f"You are a senior financial journalist. Write a {title} section, "
+            "professional and analytical, 250–300 words, using ONLY this JSON. "
+            "Avoid repetition, no headings or ticker symbols."
         )
-        section_text = resp.choices[0].message.content.strip()
-    except OpenAIError as e:
-        print(f"[!] Blog generation failed: {e}")
-        section_text = "Content temporarily unavailable."
+        # first section must start with banner
+        if idx == 0:
+            sys_prompt += f"\nBegin the output with this exact sentence:\n{banner()}"
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o",
+                temperature=0.7,
+                messages=[{"role":"system","content":sys_prompt},
+                          {"role":"user","content":raw}]
+            )
+            sections_out.append(resp.choices[0].message.content.strip())
+        except OpenAIError as e:
+            print(f"[!] Section {title} failed:", e)
+            sections_out.append("Content temporarily unavailable.")
 
-    full_blog = first_line() + "\n\n" + section_text
+    full_blog = "\n\n".join(sections_out)
 
-    # ── Metadata (summary + headline) ──────────────────────────────────
-    meta_prompt = ("You are a financial editor. Summarize the blog in ≈100 words "
-                   "starting with 'SUMMARY:'. Then generate a compelling headline "
-                   "(no timestamps). Return JSON with 'summary' and 'title'.")
+    # summary + headline
     try:
-        meta_resp = client.chat.completions.create(
+        meta = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role":"system","content":meta_prompt},
-                      {"role":"user","content":full_blog}],
             temperature=0.6,
-            response_format={"type":"json_object"}
+            response_format={"type":"json_object"},
+            messages=[
+                {"role":"system","content":
+                 "You are a financial editor. Summarize the blog in ≈100 words "
+                 "starting with 'SUMMARY:'. Then craft a compelling headline (no timestamps). "
+                 "Return JSON with 'summary' and 'title'."},
+                {"role":"user","content":full_blog}
+            ]
         )
-        meta = json.loads(meta_resp.choices[0].message.content)
-        summary, title = meta["summary"].strip(), meta["title"].strip()
+        meta_json = json.loads(meta.choices[0].message.content)
+        summary = meta_json["summary"].strip()
+        title   = meta_json["title"].strip()
     except Exception as e:
-        print(f"[!] Metadata generation failed: {e}")
+        print("[!] Metadata generation failed:", e)
         summary = "SUMMARY: Financial markets are in motion..."
         title   = "Market Commentary: Key Takeaways from Global Moves"
 
-    # ── Save files for downstream steps ────────────────────────────────
-    save_local(full_blog, summary)
-    save_video_prompt(summary)
+    # local artefacts
+    write("blog_post.txt", full_blog)
+    write("blog_summary.txt", summary)
+    video_prompt = generate_video_prompt(summary)   # writes video_prompt.txt inside
+    write("video_prompt.txt", video_prompt)         # just in case helper didn’t
+    (folder / "article.md").write_text(full_blog, encoding="utf-8")
+    print("✅ Local files saved")
 
-    # extra copy in dated folder (article.md) for archive
-    data_dir.mkdir(parents=True, exist_ok=True)
-    (data_dir / "article.md").write_text(full_blog, encoding="utf-8")
+    # try optional featured image
+    media_id = 0
+    try:
+        import image_utils                              # optional helper
+        media_id = image_utils.fetch_and_upload_blog_poster(full_blog).get("id", 0)
+    except ModuleNotFoundError:
+        pass
 
-    print("✅ Blog generation complete.")
-    print("Title →", title)
+    # publish
+    ts = datetime.now(timezone.utc).astimezone(EST).strftime("%A, %B %d, %Y %H:%M")
+    final_title = f"{ts} EST | {title}"
+    post_to_wordpress(final_title, f"<div>{full_blog}</div>", media_id)
+
+    print("✅ Blog generation & publish complete\nTitle →", final_title)
 
 if __name__ == "__main__":
-    # optional CLI arg  YYYY-MM-DD  to target a past date
-    main(sys.argv[1] if len(sys.argv) == 2 else None)
+    main(sys.argv[1] if len(sys.argv)==2 else None)
