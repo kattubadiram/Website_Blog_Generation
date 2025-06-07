@@ -13,6 +13,21 @@ import pathlib
 import time
 from typing import Dict, List
 
+import datetime as dt
+import importlib.util
+import json
+import pathlib
+import time
+from typing import Dict, List
+from article_extractor import extract_article_text
+import time
+T0 = time.time()
+import pandas as pd
+import requests
+import feedparser
+import yfinance as yf
+from transformers import logging as tf_logging, pipeline, Pipeline
+
 from transformers import pipeline, Pipeline
 import importlib
 import pandas as pd
