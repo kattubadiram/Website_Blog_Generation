@@ -2,7 +2,7 @@ name: Finance Blog Extended
 
 on:
   schedule:
-    # 06:02 AM New-York time (GitHub cron runs on UTC)
+    # 06:02 AM New-York time (GitHub cron uses UTC)
     - cron: '2 10 * * *'
   workflow_dispatch:
 
@@ -44,6 +44,7 @@ jobs:
             ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
             moviepy==1.0.3 yfinance feedparser pandas ta \
             beautifulsoup4 readability-lxml lxml \
+            transformers accelerate sentencepiece \
             google-cloud-texttospeech gtts
 
           # 2️⃣  CPU-only PyTorch from its own wheel index
@@ -51,7 +52,7 @@ jobs:
             --index-url https://download.pytorch.org/whl/cpu \
             torch
 
-      # ─────────────────── Data collection phase ────────────────────
+      # ─────────────────── Data-collection phase ────────────────────
       - name: Fetch breadth / trend data
         run: .venv/bin/python trend.py
       - name: Fetch market pulse
@@ -74,7 +75,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # ─────────────────── GCP credentials & voice-over ─────────────
+      # ─────────────────── GCP credentials & voice-over ────────────
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
