@@ -1,10 +1,10 @@
-name: Finance Blog 
+name: Finance Blog Extended
 
 on:
-  #schedule:
-    # 06:02 AM New-York time (Eastern); GitHub cron is always UTC
-    #- cron: '2 10 * * *'
-  workflow_dispatch:     # Manual trigger still allowed
+  schedule:
+    # 06:02 AM New-York time (GitHub cron uses UTC)
+    - cron: '2 10 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -41,6 +41,8 @@ jobs:
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
             moviepy==1.0.3 yfinance feedparser pandas ta \
+            beautifulsoup4 readability-lxml lxml \
+            torch --index-url https://download.pytorch.org/whl/cpu \
             google-cloud-texttospeech gtts
 
       # ─────────────────── Data collection phase ────────────────────
@@ -62,6 +64,9 @@ jobs:
         run: .venv/bin/python modular_blog.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
       # ─────────────────── GCP credentials & voiceover ──────────────
       - name: Write Google credentials to file
