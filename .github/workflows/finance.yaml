@@ -1,9 +1,9 @@
 name: Finance Blog Extended
 
 on:
-  schedule:
+  # schedule:
     # 06:02 AM New-York time (GitHub cron uses UTC)
-    - cron: '2 10 * * *'
+    # - cron: '2 10 * * *'
   workflow_dispatch:
 
 permissions:
