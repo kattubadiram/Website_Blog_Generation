@@ -17,7 +17,7 @@ try:
 except ImportError:
     ingest_section = lambda *_a, **_kw: None
 
-# ── Timezones & Dates ───────────────────────────
+# ── Timezones & Dates ──
 EST   = pytz.timezone("America/New_York")
 TODAY = dt.datetime.now(dt.timezone.utc).astimezone(EST).date()
 DATA_DIR = pathlib.Path("data") / TODAY.isoformat()
@@ -39,9 +39,6 @@ SECTOR_TICKERS = [
     "XLK", "XLP", "XLU", "XLV", "XLRE", "XLY"
 ]
 
-# STEP 3: % above MA
-# ... (rest of pct_above_ma, sector_weekly, rsp_spy_ratio unchanged) ...
-
 def pct_above_ma() -> Tuple[Dict, List[Dict]]:
     # your existing implementation
     ...
@@ -53,8 +50,6 @@ def sector_weekly() -> List[Dict]:
 def rsp_spy_ratio() -> Dict:
     # your existing implementation
     ...
-
-# STEP 6: Build breadth lens
 
 def build_breadth_lens():
     aggregate, ticker_details = pct_above_ma()
@@ -85,7 +80,15 @@ def build_breadth_lens():
     details_file.write_text(json.dumps(ticker_details, indent=2))
     print(f"✔ Saved breadth & details JSON → {DATA_DIR}")
 
-    # Optional: ingest into FAISS vector store for RAG
+    # ➕ ADDITIONAL FUNCTIONALITY: Save duplicate in same folder structure again (safe)
+    EXTRA_DIR = pathlib.Path("data") / TODAY.isoformat()
+    EXTRA_DIR.mkdir(parents=True, exist_ok=True)
+    extra_breadth_file = EXTRA_DIR / "breadth.json"
+    extra_details_file = EXTRA_DIR / "details.json"
+    extra_breadth_file.write_text(json.dumps(summary_blob, indent=2))
+    extra_details_file.write_text(json.dumps(ticker_details, indent=2))
+    print(f"✔ Also saved duplicate files to → {EXTRA_DIR}")
+
     try:
         ingest_section(summary_blob)
         ingest_section({"meta": summary_blob["meta"], "entities": ticker_details})
@@ -93,15 +96,11 @@ def build_breadth_lens():
     except Exception as exc:
         print(f"Vector-ingest skipped – {exc}")
 
-    # Persist files to GitHub
     push_to_github(breadth_file)
     push_to_github(details_file)
 
     print(f"⏱ Total runtime: {round(time.time() - T0, 2)} seconds")
 
-# ───────────────────────────────────────────────────────────────
-# GitHub persistence helper
-# ───────────────────────────────────────────────────────────────
 def push_to_github(file_path: pathlib.Path):
     token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPO")  # format: 'owner/repo'
@@ -110,16 +109,13 @@ def push_to_github(file_path: pathlib.Path):
         print("✔ GitHub persistence skipped: set GITHUB_TOKEN and GITHUB_REPO env vars.")
         return
 
-    # Read and encode file
     with open(file_path, "rb") as f:
         content_b64 = base64.b64encode(f.read()).decode()
 
-    # Construct API URL
-    api_path = file_path.as_posix()  # e.g. 'data/2025-06-09/breadth.json'
+    api_path = file_path.as_posix()
     url = f"https://api.github.com/repos/{repo}/contents/{api_path}"
     headers = {"Authorization": f"token {token}"}
 
-    # Check if file exists to include sha
     resp = requests.get(url, headers=headers)
     sha = resp.json().get("sha") if resp.status_code == 200 else None
 
@@ -137,7 +133,6 @@ def push_to_github(file_path: pathlib.Path):
     else:
         print(f"✖ GitHub push failed: {put_resp.status_code} - {put_resp.text}")
 
-# STEP 7: Entry-point
-
 if __name__ == "__main__":
+    T0 = time.time()
     build_breadth_lens()
