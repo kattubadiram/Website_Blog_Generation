@@ -179,7 +179,7 @@ if __name__ == "__main__":
         market_summary  = summarize_market_snapshot(snapshot)
 
         # 🔧 Choose how many sections to generate — up to 12
-        section_count = 4  # ~250–350 words per section
+        section_count = 3  # ~250–350 words per section
 
         print(f"Generating blog content with {section_count} sections...")
         blog_text, summary_text, base_title = generate_blog(market_summary, section_count=section_count)
