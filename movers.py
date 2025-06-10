@@ -19,7 +19,7 @@ try:
 except ImportError:
     ingest_section = lambda *_a, **_kw: None
 
-# ── Timezones & Dates ───────────────────────────
+# ── Timezones & Dates ──
 EST      = pytz.timezone("America/New_York")
 DATE_STR = dt.datetime.now(dt.timezone.utc).astimezone(EST).date().isoformat()
 DATA_DIR = pathlib.Path("data") / DATE_STR
@@ -53,7 +53,6 @@ summariser: Pipeline = pipeline(
     token=None
 )
 
-# STEP 3 · Scrape top-5 tickers per category
 def top5_symbols(category: str, pause: float = 1.5) -> List[str]:
     time.sleep(pause)
     html = requests.get(URLS[category], headers=HEADERS, timeout=12).text
@@ -63,7 +62,6 @@ def top5_symbols(category: str, pause: float = 1.5) -> List[str]:
     df = tables[0]
     return df.get("Symbol", [])[:5].tolist()
 
-# STEP 4 · Fetch RSS headlines
 def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
     url = f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={symbol}&region=US&lang=en-US"
     time.sleep(pause)
@@ -77,7 +75,6 @@ def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
         "published": e.get("published", "").strip()
     } for e in parsed.entries[:10]]
 
-# STEP 5 · Summarise headlines
 def summarise_headlines(entries: List[Dict]) -> List[str]:
     lines: List[str] = []
     for e in entries:
@@ -87,7 +84,6 @@ def summarise_headlines(entries: List[Dict]) -> List[str]:
         lines.append(line.strip())
     return lines
 
-# STEP 6 · Build movers blob
 def build_movers_blob(pause: float = 1.0) -> Dict:
     symbols_by_cat: Dict[str, List[str]] = {}
     for cat in URLS:
@@ -117,7 +113,6 @@ def build_movers_blob(pause: float = 1.0) -> Dict:
         "entities": entities
     }
 
-# GitHub persistence helper
 def push_to_github(file_path: pathlib.Path):
     token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPO")
@@ -145,12 +140,19 @@ def push_to_github(file_path: pathlib.Path):
     else:
         print(f"✖ GitHub push failed: {put_resp.status_code} - {put_resp.text}")
 
-# STEP 7 · Persist + vector-ingest
 def main():
+    T0 = time.time()
     blob = build_movers_blob()
     out_file = DATA_DIR / "movers.json"
     out_file.write_text(json.dumps(blob, indent=2))
     print(f"✔ Saved movers JSON → {out_file}")
+
+    # ➕ ADDITIONAL FUNCTIONALITY: Save duplicate file to same location again
+    EXTRA_DIR = pathlib.Path("data") / DATE_STR
+    EXTRA_DIR.mkdir(parents=True, exist_ok=True)
+    extra_file = EXTRA_DIR / "movers.json"
+    extra_file.write_text(json.dumps(blob, indent=2))
+    print(f"✔ Also saved duplicate file → {extra_file}")
 
     try:
         ingest_section(blob)
@@ -158,9 +160,7 @@ def main():
     except Exception as exc:
         print(f"Vector-ingest skipped – {exc}")
 
-    # Persist to GitHub
     push_to_github(out_file)
-
     print(f"⏱ Total runtime: {round(time.time() - T0, 2)} seconds")
 
 if __name__ == "__main__":
