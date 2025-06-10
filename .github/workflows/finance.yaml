@@ -62,11 +62,6 @@ jobs:
       - name: Fetch breadth / trend data
         run: .venv/bin/python trend.py
 
-
-      # Optional extra snapshot (kept from original flow)
-      - name: Fetch market data and save snapshot
-        run: .venv/bin/python market_snapshot_fetcher.py
-
       # ─────────────────── Blog generation ──────────────────────────
       - name: Generate blog and summary
         run: .venv/bin/python modular_blog.py
