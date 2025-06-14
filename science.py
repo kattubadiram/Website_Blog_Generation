@@ -62,7 +62,7 @@ def generate_blog(market_summary: str, section_count: int = 1):
 
     for i in range(section_count):
         system_content = f"""
-You are a senior science and technology journalist writing for a well-informed audience about - At CERN's Large Hadron Collider, scientists briefly created gold in a lab by smashing lead ions together at nearly the speed of light. Write the section titled '{section_titles[i]}'.
+You are a senior science and technology journalist writing for a well-informed audience about - Majorana by Microsoft. Write the section titled '{section_titles[i]}'.
 
 Each section should be around 250 words, based only on verified scientific or technological facts. Use your internal knowledge base but avoid speculation or fictional data. Maintain a clear, factual, and analytical tone. Avoid repetition. Do not use headings in the output. Do not include any symbols like the caret (^), emojis, or unsupported claims.
 {"Begin the first section with this exact sentence:\n" + today_line if i == 0 else ""}
