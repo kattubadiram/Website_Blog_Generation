@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 # -------------------------
 AVATAR_VIDEO = 'avatar_video.mp4'
 IMAGES_FOLDER = 'ai_images/'         # no longer used, left for compatibility
-FINAL_VIDEO  = 'video_output_shorts.mp4'
+FINAL_VIDEO  = 'video_output.mp4'
 
 FRAME_RATE   = 24
 SHOW_IMAGE_EVERY = 6                 # unused
