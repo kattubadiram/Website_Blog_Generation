@@ -53,17 +53,13 @@ jobs:
             torch
 
       # ─────────────────── Data-collection phase ────────────────────
-      - name: Fetch market pulse
-        run: .venv/bin/python pulse.py
-      - name: Fetch movers
-        run: .venv/bin/python movers.py
+
       - name: Build watchlist
         run: .venv/bin/python watchlist.py
 
 
       # Optional extra snapshot (kept from original flow)
-      - name: Fetch market data and save snapshot
-        run: .venv/bin/python market_snapshot_fetcher.py
+
 
       - name: Verify ffmpeg-python is importable
         run: .venv/bin/python -c "import ffmpeg; print('ffmpeg-python works')"
@@ -139,12 +135,13 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      - name: Upload video to WordPress
-        run: .venv/bin/python upload_to_wp.py
-        env:
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+      - name: Prepare YouTube OAuth credentials
+        run: |
+         echo "${{ secrets.YT_CREDENTIALS_JSON }}" > credentials.json
+         echo "${{ secrets.YT_TOKEN_JSON }}" > token.json
+
+      - name: Upload video to YouTube Shorts
+        run: python upload_to_youtube.py
 
       # ─────────────────── Commit history logs back to repo ─────────
       - name: Commit history logs
