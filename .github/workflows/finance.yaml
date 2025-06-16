@@ -67,6 +67,9 @@ jobs:
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
 
+      - name: Verify ffmpeg-python is importable
+        run: .venv/bin/python -c "import ffmpeg; print('ffmpeg-python works')"
+
       # ─────────────────── Blog generation ──────────────────────────
       - name: Generate blog and summary
         run: .venv/bin/python modular_blog.py
@@ -95,6 +98,27 @@ jobs:
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
+
+      - name: Generate 20s video narration
+        run: .venv/bin/python generate_video_prompt.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Generate avatar video
+        run: .venv/bin/python generate_video_heygen.py
+        env:
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API1 }}
+
+      - name: Save generated avatar video immediately
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add avatar_video.mp4
+          git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+          
+
 
       # ─────────────────── Publish to WordPress & video upload ──────
       - name: Upload blog audio to WordPress
