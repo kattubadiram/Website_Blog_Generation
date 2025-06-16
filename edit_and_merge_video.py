@@ -1,96 +1,52 @@
 # create_overlay_cutaway_video.py
 
 import os
-import numpy as np
+from moviepy.editor import VideoFileClip
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
-from PIL import Image, ImageDraw, ImageFont
 
 # -------------------------
 # Configuration constants
+# (kept unchanged for workflow compatibility)
 # -------------------------
 AVATAR_VIDEO = 'avatar_video.mp4'
-IMAGES_FOLDER = 'ai_images/'
-FINAL_VIDEO = 'video_output_shorts.mp4'
+IMAGES_FOLDER = 'ai_images/'         # no longer used, left for compatibility
+FINAL_VIDEO  = 'video_output_shorts.mp4'
 
-FRAME_RATE = 24
-SHOW_IMAGE_EVERY = 6        # Seconds between image overlays
-IMAGE_DURATION = 3          # Duration each image stays on screen
-IMAGE_FADE = 0.5            # Duration of fade in/out for each image
-SHORTS_WIDTH = 1080
+FRAME_RATE   = 24
+SHOW_IMAGE_EVERY = 6                 # unused
+IMAGE_DURATION   = 3                 # unused
+IMAGE_FADE       = 0.5               # unused
+SHORTS_WIDTH  = 1080
 SHORTS_HEIGHT = 1920
-MAX_DURATION = 60           # Shorts must be less than or equal to 60s
+MAX_DURATION  = 60                   # Shorts must be ≤ 60 s
 
 # -------------------------
-# Create a transparent image with timestamp text
-# -------------------------
-def create_text_overlay(text, width, height):
-    img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 36
-    font = ImageFont.truetype(font_path, font_size)
-
-    text_width, text_height = draw.textsize(text, font=font)
-    x = width - text_width - 40
-    y = 40
-
-    draw.text((x, y), text, font=font, fill=(255, 255, 255, 255))
-    return np.array(img)
-
-# -------------------------
-# Create final video with image overlays and timestamp
+# Main function — converts avatar video to portrait
 # -------------------------
 def create_overlay_cutaway_video():
     # Load avatar video
-    avatar_clip = VideoFileClip(AVATAR_VIDEO).resize((SHORTS_WIDTH, SHORTS_HEIGHT))
-    
-    # Limit duration to 60 seconds (Shorts requirement)
+    avatar_clip = VideoFileClip(AVATAR_VIDEO)
+
+    # Trim to Shorts-legal length
     avatar_duration = min(avatar_clip.duration, MAX_DURATION)
     avatar_clip = avatar_clip.subclip(0, avatar_duration)
 
-    # Collect overlay images
-    images = sorted([
-        f for f in os.listdir(IMAGES_FOLDER)
-        if f.lower().endswith(('.png', '.jpg', '.jpeg'))
-    ])
-    if not images:
-        raise Exception("No images found in 'ai_images/' folder.")
+    # Resize so the smaller dimension fits, then crop center to 1080 × 1920
+    scale_factor = max(SHORTS_WIDTH / avatar_clip.w, SHORTS_HEIGHT / avatar_clip.h)
+    resized_clip = avatar_clip.resize(scale_factor)
+    portrait_clip = resized_clip.crop(
+        x_center=resized_clip.w / 2,
+        y_center=resized_clip.h / 2,
+        width=SHORTS_WIDTH,
+        height=SHORTS_HEIGHT
+    )
 
-    # Schedule overlay image times
-    overlay_times = list(range(SHOW_IMAGE_EVERY, int(avatar_duration), SHOW_IMAGE_EVERY))
-    extended_images = (images * ((len(overlay_times) // len(images)) + 1))[:len(overlay_times)]
+    # Preserve original audio (if any)
+    final_clip = portrait_clip.set_audio(avatar_clip.audio)
 
-    # Create overlay image clips
-    overlays = []
-    for time_sec, img_file in zip(overlay_times, extended_images):
-        img_path = os.path.join(IMAGES_FOLDER, img_file)
-        img_clip = (
-            ImageClip(img_path)
-            .resize((SHORTS_WIDTH, SHORTS_HEIGHT))
-            .set_start(time_sec)
-            .set_duration(IMAGE_DURATION)
-            .crossfadein(IMAGE_FADE)
-            .crossfadeout(IMAGE_FADE)
-        )
-        overlays.append(img_clip)
-
-    # Create timestamp overlay in Eastern Time
-    now = datetime.now(ZoneInfo("America/New_York"))
-    datetime_text = now.strftime("%A, %B %d, %Y %I:%M %p ET")
-    text_image_array = create_text_overlay(datetime_text, SHORTS_WIDTH, SHORTS_HEIGHT)
-    text_image_clip = ImageClip(text_image_array, ismask=False).set_duration(avatar_duration)
-
-    # Combine everything into one composite clip
-    final = CompositeVideoClip(
-        [avatar_clip, text_image_clip] + overlays,
-        size=(SHORTS_WIDTH, SHORTS_HEIGHT)
-    ).set_audio(avatar_clip.audio)
-
-    # Export the final video
-    final.write_videofile(
+    # Export
+    final_clip.write_videofile(
         FINAL_VIDEO,
         fps=FRAME_RATE,
         codec="libx264",
