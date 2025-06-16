@@ -111,6 +111,19 @@ jobs:
           git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
+
+      - name: Merge avatar video and overlay images
+        run: .venv/bin/python edit_and_merge_video.py
+
+      - name: Install YouTube uploader dependencies
+        run: .venv/bin/pip install google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Upload video to YouTube
+        run: .venv/bin/python upload_to_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           
 
 
