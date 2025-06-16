@@ -15,19 +15,19 @@ SPEAK_SPEED = 1.0
 # Avatars and their corresponding voices
 AVATAR_VOICE_PAIRS = [
     {
-        "avatar_id": "Gala_sitting_businesssofa_front",
-        "voice_id": "35b75145af9041b298c720f23375f578",  # Gala - Lifelike
-        "name": "Gala"
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
     },
     {
-        "avatar_id": "Piper_sitting_businesssofa_side",
-        "voice_id": "aeeb145b5a2f418d8f41456f79644f33",  # Piper - Lifelike
-        "name": "Piper Business Sofa Front"
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
     },
     {
-        "avatar_id": "June_HR_public",
-        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Masha - Lifelike
-        "name": "Masha"
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
     },
     {
         "avatar_id": "Georgia_expressive_2024112701",
@@ -40,9 +40,9 @@ AVATAR_VOICE_PAIRS = [
         "name": "Georgia Office Front"
     },
     {
-        "avatar_id": "June_HR_public",
-        "voice_id": "387ec7c290324b55a6bb6ab654f016ef",  # Aubrey - Lifelike
-        "name": "Aubrey"
+        "avatar_id": "Georgia_standing_casual_side",
+        "voice_id": "511ffd086a904ef593b608032004112c",  # Sabine - Lifelike (Closest match for Georgia)
+        "name": "Georgia Office Front"
     }
 ]
 
