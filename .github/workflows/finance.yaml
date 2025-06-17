@@ -3,7 +3,7 @@ name: Finance Final
 on:
   schedule:
     # 06:02 AM New-York time
-    - cron: '8 30 * * *'
+   - cron: '30 8 * * *'
   workflow_dispatch:
 
 permissions:
