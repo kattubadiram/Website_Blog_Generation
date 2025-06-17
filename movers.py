@@ -1,51 +1,36 @@
 """
-movers.py  ·  Morning Market Primer  – Section 3
+movers.py  ·  Morning Market Primer – Section 3
 ------------------------------------------------
 Scrapes Yahoo Finance mover lists (most-active, gainers, losers,
 52-week highs/lows), grabs recent RSS headlines, summarises them,
-and writes a consolidated JSON blob.
+and writes the result to JSON Lines for easy CI use.
 """
-import datetime as dt
-import json
-import pathlib
-import time
-from typing import Dict, List
-
 import datetime as dt
 import importlib.util
 import json
 import pathlib
 import time
 from typing import Dict, List
-import time
-T0 = time.time()
-import requests
-import pandas as pd
+
 import feedparser
-from transformers import logging as tf_logging, pipeline, Pipeline
+import pandas as pd
+import pytz
+import requests
+from transformers import pipeline, Pipeline
 from article_extractor import extract_article_text
 
-
-import feedparser
-import pandas as pd
-import requests
-import pytz                       # ← NEW
+# ─── Timing ─────────────────────────────────────────────────────
 T0 = time.time()
 
+# ─── Optional FAISS ingestion layer ─────────────────────────────
 try:
     from rag_layer.ingest import ingest_section
 except ImportError:
-    ingest_section = lambda *_a, **_kw: None
+    ingest_section = lambda *_a, **_kw: None  # no-op fallback
 
-# ── New EST-aware folder ───────────────────────────
-EST       = pytz.timezone("America/New_York")
-DATE_STR  = dt.datetime.now(dt.timezone.utc).astimezone(EST).date().isoformat()
-DATA_DIR  = pathlib.Path("data") / DATE_STR
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-# (all other code is exactly as before)
-DATA_DIR = pathlib.Path("data") / dt.date.today().isoformat()
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+# ─── Constants ─────────────────────────────────────────────────
+EST        = pytz.timezone("America/New_York")
+RUN_DATE   = dt.datetime.now(dt.timezone.utc).astimezone(EST).date().isoformat()
 
 URLS = {
     "most_active": "https://finance.yahoo.com/most-active",
@@ -63,9 +48,7 @@ HEADERS = {
     )
 }
 
-# ────────────────────────────────────────────────────────────────
-# STEP 2 · Summariser pipeline (backend guard & anonymous download)
-# ────────────────────────────────────────────────────────────────
+# ─── Summariser pipeline (≈480 MB DistilBART) ──────────────────
 if not any(importlib.util.find_spec(x) for x in ("torch", "tensorflow", "jax")):
     raise RuntimeError(
         "No deep-learning backend detected. "
@@ -73,7 +56,7 @@ if not any(importlib.util.find_spec(x) for x in ("torch", "tensorflow", "jax")):
         "    pip install torch --index-url https://download.pytorch.org/whl/cpu torch"
     )
 
-MODEL_NAME = "sshleifer/distilbart-cnn-12-6"  # ≈480 MB
+MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
 
 summariser: Pipeline = pipeline(
     "summarization",
@@ -81,16 +64,11 @@ summariser: Pipeline = pipeline(
     tokenizer=MODEL_NAME,
     framework="pt",
     truncation=True,
-    token=None  # anonymous → avoids 401
+    token=None          # anonymous download, avoids 401 on HF Hub
 )
 
-# ────────────────────────────────────────────────────────────────
-# STEP 3 · Scrape top-5 tickers per category
-# ────────────────────────────────────────────────────────────────
+# ─── Helpers ───────────────────────────────────────────────────
 def top5_symbols(category: str, pause: float = 1.5) -> List[str]:
-    """
-    Fetches the first five ticker symbols from the Yahoo Finance page for the given category.
-    """
     if category not in URLS:
         raise KeyError(category)
     time.sleep(pause)
@@ -101,14 +79,8 @@ def top5_symbols(category: str, pause: float = 1.5) -> List[str]:
     df = tables[0]
     return df.get("Symbol", [])[:5].tolist()
 
-# ────────────────────────────────────────────────────────────────
-# STEP 4 · Fetch RSS headlines for a ticker
-# ────────────────────────────────────────────────────────────────
+
 def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
-    """
-    Queries Yahoo’s RSS feed for the given symbol.
-    Returns a list of up to 10 dicts: {title, summary, link, published}.
-    """
     url = (
         f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={symbol}"
         "&region=US&lang=en-US"
@@ -127,9 +99,7 @@ def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
         })
     return out
 
-# ────────────────────────────────────────────────────────────────
-# STEP 5 · Condense headlines into one line
-# ────────────────────────────────────────────────────────────────
+
 def summarise_headlines(entries: List[Dict]) -> List[str]:
     lines: List[str] = []
     for e in entries:
@@ -140,15 +110,7 @@ def summarise_headlines(entries: List[Dict]) -> List[str]:
     return lines
 
 
-# ────────────────────────────────────────────────────────────────
-# STEP 6 · Build canonical JSON blob
-# ────────────────────────────────────────────────────────────────
 def build_movers_blob(pause: float = 1.0) -> Dict:
-    """
-    1) Fetch top-5 symbols for each mover category.
-    2) Fetch up to 10 RSS headlines and summarise each.
-    3) Construct the JSON in our agreed schema.
-    """
     symbols_by_cat: Dict[str, List[str]] = {}
     for cat in URLS:
         try:
@@ -165,7 +127,7 @@ def build_movers_blob(pause: float = 1.0) -> Dict:
                 summaries = summarise_headlines(rss_items)
                 entities.append({
                     "ticker":    sym,
-                    "label":     sym,         # can map to company name later
+                    "label":     sym,
                     "data":      {"category": cat},
                     "summaries": summaries
                 })
@@ -174,22 +136,30 @@ def build_movers_blob(pause: float = 1.0) -> Dict:
 
     return {
         "meta": {
-            "section": "movers",
+            "section":      "movers",
             "generated_at": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
-            "source": "yahoo_rss"
+            "run_date":     RUN_DATE,
+            "source":       "yahoo_rss"
         },
         "entities": entities
     }
 
-# ────────────────────────────────────────────────────────────────
-# STEP 7 · Persist + vector-ingest
-# ────────────────────────────────────────────────────────────────
-def main():
+# ─── Persistence (JSONL + “latest” snapshot) ───────────────────
+LOG_FILE     = pathlib.Path("movers_log.jsonl")
+LATEST_FILE  = pathlib.Path("movers_latest.json")
+
+def append_to_log(blob: Dict) -> None:
+    with LOG_FILE.open("a") as f:
+        f.write(json.dumps(blob) + "\n")
+    LATEST_FILE.write_text(json.dumps(blob, indent=2))
+    print(f"✔ Appended snapshot to {LOG_FILE} and refreshed {LATEST_FILE}")
+
+
+# ─── Main entrypoint ───────────────────────────────────────────
+def main() -> None:
     blob = build_movers_blob()
 
-    out_file = DATA_DIR / "movers.json"
-    out_file.write_text(json.dumps(blob, indent=2))
-    print(f"✔ Saved movers JSON → {out_file}")
+    append_to_log(blob)
 
     try:
         ingest_section(blob)
@@ -198,6 +168,7 @@ def main():
         print(f"Vector-ingest skipped – {exc}")
 
     print(f"⏱ Total runtime: {round(time.time() - T0, 2)} seconds")
-    
+
+
 if __name__ == "__main__":
     main()
