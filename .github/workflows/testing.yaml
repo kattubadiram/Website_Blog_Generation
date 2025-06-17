@@ -96,7 +96,7 @@ jobs:
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
       - name: Upload video to WordPress
-        run: .venv/bin/python upload_video_to_wp.py
+        run: .venv/bin/python upload_to_wp.py
         env:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
