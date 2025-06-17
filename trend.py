@@ -4,11 +4,11 @@ trend.py  ·  Morning Market Primer
 Computes S&P 500 breadth (50- & 200-day SMA %),
 sector ETF moves, and the RSP/SPY ratio.
 
-Outputs
-  • data/YYYY-MM-DD/breadth.json   (aggregate snapshot)
-  • data/YYYY-MM-DD/details.json   (per-ticker metrics)
+Outputs:
+  • breadth_log.jsonl              (append-only snapshot)
+  • breadth_latest.json            (latest aggregate)
+  • breadth_details_latest.json    (per-ticker metrics)
 """
-# STEP 1 ─────────────────────────────────────────────
 import datetime as dt
 import json
 import pathlib
@@ -17,85 +17,42 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 import yfinance as yf
-import pytz                       # ← NEW
-T0 = time.time()
+import pytz
 
-# local modules
 from sp500 import sp500_tickers
 try:
-    from rag_layer.ingest import ingest_section   # optional
+    from rag_layer.ingest import ingest_section
 except ImportError:
     ingest_section = lambda *_a, **_kw: None
 
-# ── New EST-aware folder ───────────────────────────
-EST   = pytz.timezone("America/New_York")
-TODAY = dt.datetime.now(dt.timezone.utc).astimezone(EST).date()
-DATA_DIR = pathlib.Path("data") / TODAY.isoformat()   # e.g. data/2025-06-07
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+T0 = time.time()
 
-# (rest of the original code is unchanged)
-# ---------------------------------------------------------------------
-# … EVERYTHING BELOW THIS LINE IS IDENTICAL TO YOUR ORIGINAL SCRIPT …
-# ---------------------------------------------------------------------
-
-# 1.2 · Helpers --------------------------------------------------------
-def _last_week_bounds(d: dt.date) -> Tuple[dt.date, dt.date]:
-    last_monday = d - dt.timedelta(days=d.weekday() + 7)
-    last_friday = last_monday + dt.timedelta(days=4)
-    return last_monday, last_friday
-
-LAST_MON, LAST_FRI = _last_week_bounds(TODAY)
-
-# … keep the remainder of your logic intact …
-TODAY = dt.date.today()
-DATA_DIR = pathlib.Path("data") / TODAY.isoformat()  # e.g. data/2025-06-04
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+# ─── Constants ───────────────────────────────────────
+EST       = pytz.timezone("America/New_York")
+TODAY     = dt.datetime.now(dt.timezone.utc).astimezone(EST).date()
+RUN_DATE  = TODAY.isoformat()
 
 SECTOR_TICKERS = [
     "XLB", "XLC", "XLE", "XLF", "XLI",
     "XLK", "XLP", "XLU", "XLV", "XLRE", "XLY"
 ]
 
+# ─── File targets ─────────────────────────────────────
+LOG_FILE_BREADTH = pathlib.Path("breadth_log.jsonl")
+LATEST_BREADTH   = pathlib.Path("breadth_latest.json")
+LATEST_DETAILS   = pathlib.Path("breadth_details_latest.json")
 
-# STEP 2 ────────────────────────────────────────────────────────────
-# Helper: calculate date anchors (last Monday / Friday of prior week)
+# ─── Date anchors ─────────────────────────────────────
 def _last_week_bounds(today: dt.date) -> Tuple[dt.date, dt.date]:
     this_monday = today - dt.timedelta(days=today.weekday())
     last_monday = this_monday - dt.timedelta(days=7)
     last_friday = last_monday + dt.timedelta(days=4)
     return last_monday, last_friday
 
-
 LAST_MON, LAST_FRI = _last_week_bounds(TODAY)
 
-
-# STEP 3 ────────────────────────────────────────────────────────────
-# % of constituents above 50- & 200-day SMAs
+# ─── SMA Breadth Calculation ──────────────────────────
 def pct_above_ma() -> Tuple[Dict, List[Dict]]:
-    """
-    Fetch one year of daily closes for each S&P 500 ticker, compute:
-      - latest 50-day SMA
-      - latest 200-day SMA
-      - whether current price is above each SMA
-
-    Returns:
-      aggregate (dict):
-        {
-          "50d": <percent above 50-day SMA>,
-          "200d": <percent above 200-day SMA>,
-          "sample_size": <number of symbols included>
-        }
-      details (list[dict]): per-ticker:
-        {
-          "ticker": <symbol>,
-          "current": <latest close>,
-          "sma50": <latest 50-day SMA>,
-          "sma200": <latest 200-day SMA>,
-          "above50": <True/False>,
-          "above200": <True/False>,
-          "summaries": []   # Trend has no text to summarise, but field must exist
-        }
-    """
     print("▶ Computing SMA breadth for all S&P 500 constituents …")
     above_50 = above_200 = valid = 0
     details: List[Dict] = []
@@ -103,11 +60,10 @@ def pct_above_ma() -> Tuple[Dict, List[Dict]]:
     for idx, symbol in enumerate(sp500_tickers, 1):
         try:
             hist = yf.Ticker(symbol).history(period="1y", auto_adjust=False)
-            time.sleep(0.3)  # throttle politely
+            time.sleep(0.3)
 
             closes = hist["Close"]
             if len(closes) < 200:
-                # Skip tickers without sufficient history
                 continue
 
             sma50 = closes.rolling(window=50).mean().iloc[-1]
@@ -130,7 +86,7 @@ def pct_above_ma() -> Tuple[Dict, List[Dict]]:
                 "sma200": round(float(sma200), 2),
                 "above50": bool(above50_flag),
                 "above200": bool(above200_flag),
-                "summaries": []  # no text to summarise for Trend
+                "summaries": []
             })
 
             print(f"{idx:>3}/{len(sp500_tickers)}  {symbol}: ok")
@@ -148,16 +104,8 @@ def pct_above_ma() -> Tuple[Dict, List[Dict]]:
     }
     return aggregate, details
 
-
-# STEP 4 ────────────────────────────────────────────────────────────
-# 1-week sector ETF percentage moves
+# ─── Sector Returns ───────────────────────────────────
 def sector_weekly() -> List[Dict]:
-    """
-    Download daily 'Close' prices for sector ETFs between LAST_MON and LAST_FRI.
-    Compute the percentage change from Monday’s close to Friday’s close.
-    Returns a list of dicts:
-      { "sector": <ticker>, "w_change": <pct change> }
-    """
     price_df = yf.download(
         SECTOR_TICKERS,
         start=str(LAST_MON),
@@ -172,17 +120,8 @@ def sector_weekly() -> List[Dict]:
 
     return [{"sector": t, "w_change": float(pct[t])} for t in pct.index]
 
-
-# STEP 5 ────────────────────────────────────────────────────────────
-# RSP / SPY ratio change over two consecutive Fridays
+# ─── RSP/SPY Ratio ────────────────────────────────────
 def rsp_spy_ratio() -> Dict:
-    """
-    Download daily 'Close' for RSP & SPY from the previous Friday to LAST_FRI.
-    Compute:
-      - prev = RSP/SPY ratio on the prior Friday
-      - curr = RSP/SPY ratio on LAST_FRI
-      - pct_chg = (curr - prev)/prev * 100
-    """
     prev_friday = LAST_FRI - dt.timedelta(days=7)
     df = yf.download(
         ["RSP", "SPY"],
@@ -202,28 +141,15 @@ def rsp_spy_ratio() -> Dict:
         "pct_chg": pct_chg
     }
 
-
-# STEP 6 ────────────────────────────────────────────────────────────
-# Build canonical JSON snapshot + optional vector ingest
+# ─── Core snapshot builder ─────────────────────────────
 def build_breadth_lens():
-    """
-    1. Compute pct_above_ma() → aggregate stats & per-ticker details
-    2. Build summary_blob with:
-         • meta: {section: "trend", generated_at, source, notes}
-         • entities: [one dict for “S&P 500” with aggregate data; Summaries field empty]
-         • sector_return: output of sector_weekly()
-         • rsp_spy_ratio: output of rsp_spy_ratio()
-    3. Persist to:
-         data/YYYY-MM-DD/breadth.json
-         data/YYYY-MM-DD/details.json
-    4. If rag_layer.ingest is available, ingest both blobs into FAISS.
-    """
     aggregate, ticker_details = pct_above_ma()
 
     summary_blob = {
         "meta": {
             "section": "trend",
             "generated_at": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "run_date": RUN_DATE,
             "source": "yfinance",
             "notes": "S&P 500 breadth vs 50/200-day SMA"
         },
@@ -232,24 +158,26 @@ def build_breadth_lens():
                 "ticker": "^GSPC",
                 "label": "S&P 500",
                 "data": aggregate,
-                "summaries": []  # no text for Trend, but field must exist
+                "summaries": []
             }
         ],
         "sector_return": sector_weekly(),
         "rsp_spy_ratio": rsp_spy_ratio()
     }
 
-    # Persist summary and details to disk
-    (DATA_DIR / "breadth.json").write_text(json.dumps(summary_blob, indent=2))
-    (DATA_DIR / "details.json").write_text(json.dumps(ticker_details, indent=2))
-    print(f"✔ Saved breadth & details JSON → {DATA_DIR}")
+    # Save to files
+    with LOG_FILE_BREADTH.open("a") as f:
+        f.write(json.dumps(summary_blob) + "\n")
+    LATEST_BREADTH.write_text(json.dumps(summary_blob, indent=2))
+    LATEST_DETAILS.write_text(json.dumps(ticker_details, indent=2))
+    print("✔ Saved breadth_log.jsonl, breadth_latest.json, and breadth_details_latest.json")
 
-    # Optional: ingest into FAISS vector store for RAG
+    # Optional: Ingest into FAISS
     try:
-        ingest_section(summary_blob)                  # aggregate doc
+        ingest_section(summary_blob)
         ingest_section({
             "meta": summary_blob["meta"],
-            "entities": ticker_details               # per-ticker docs
+            "entities": ticker_details
         })
         print("✔ Ingested into FAISS vector store")
     except Exception as exc:
@@ -257,7 +185,6 @@ def build_breadth_lens():
 
     print(f"⏱ Total runtime: {round(time.time() - T0, 2)} seconds")
 
-# STEP 7 ────────────────────────────────────────────────────────────
-# Entry-point
+# ─── Entrypoint ───────────────────────────────────────
 if __name__ == "__main__":
     build_breadth_lens()
