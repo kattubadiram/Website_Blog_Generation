@@ -85,8 +85,7 @@ jobs:
       - name: Generate 20s video narration
         run: .venv/bin/python generate_video_prompt.py
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }
-
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       # ─────────────────── Publish to WordPress ──────────
       - name: Upload blog audio to WordPress
@@ -95,7 +94,7 @@ jobs:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-    
+
       - name: Upload video to WordPress
         run: .venv/bin/python upload_video_to_wp.py
         env:
