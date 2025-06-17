@@ -1,232 +1,263 @@
-import os
-import json
-import openai
-import requests
-import pytz
+#!/usr/bin/env python3
+"""
+Daily Science & Technology Blog Generator
+(LLM-only – no scraping, same workflow & naming as financial_blog.py)
+
+• GPT-4o picks today’s most impactful Sci-Tech headline, avoiding repeats
+• Writes multi-section article (~250-350 words each)
+• Creates summary + title, stores history, saves local files
+• Generates 2-sentence video narration prompt
+• Uploads poster image via `image_utils`
+• Publishes to WordPress
+"""
+
+import os, json, pytz, requests, re
 from datetime import datetime
 from dotenv import load_dotenv
+from typing import Set
+import openai
 from openai import OpenAIError
 
-# Custom utilities
+# ─── Custom utilities (unchanged) ────────────────────────────────────────
 import image_utils
+# If you don’t need a market snapshot for science posts, remove these lines.
 from market_snapshot_fetcher import get_market_snapshot, append_snapshot_to_log, summarize_market_snapshot
+# ─────────────────────────────────────────────────────────────────────────
 
-# Load credentials
+# ─── ENVIRONMENT ─────────────────────────────────────────────────────────
 load_dotenv()
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
-WP_USERNAME      = os.getenv("WP_USERNAME")
-WP_APP_PASSWORD  = os.getenv("WP_APP_PASSWORD")
-WP_SITE_URL      = os.getenv("WP_SITE_URL")
+OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
+WP_USERNAME     = os.getenv("WP_USERNAME")
+WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD")
+WP_SITE_URL     = os.getenv("WP_SITE_URL")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
+# ─── CONSTANTS / FILES ───────────────────────────────────────────────────
+TOPIC_HISTORY_FILE = "topic_history_science.json"
+LOG_FILE           = "blog_history_science.txt"
+MAX_TOPIC_ATTEMPTS = 5       # retries if GPT repeats a topic
 
+# ─── HELPERS ─────────────────────────────────────────────────────────────
 def ordinal(n: int) -> str:
-    if 11 <= (n % 100) <= 13:
-        suffix = "th"
-    else:
-        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{suffix}"
+    if 11 <= n % 100 <= 13:
+        return f"{n}th"
+    return f"{n}{ {1:'st',2:'nd',3:'rd'}.get(n%10,'th') }"
 
+def load_topic_history() -> Set[str]:
+    if os.path.exists(TOPIC_HISTORY_FILE):
+        try:
+            return set(json.load(open(TOPIC_HISTORY_FILE)))
+        except json.JSONDecodeError:
+            pass
+    return set()
 
-def log_blog_to_history(blog_content: str):
-    LOG_FILE = "blog_history.txt"
-    ts = (
-        datetime.now(pytz.utc)
-        .astimezone(pytz.timezone("America/New_York"))
-        .strftime("%Y-%m-%d %H:%M:%S %Z")
-    )
-    divider = "=" * 80
-    entry = f"\n\n{divider}\nBLOG ENTRY - {ts}\n{divider}\n\n{blog_content}\n"
-    with open(LOG_FILE, "a") as f:
-        f.write(entry)
-    print("Logged to", LOG_FILE)
+def save_topic_history(history: Set[str]):
+    with open(TOPIC_HISTORY_FILE, "w") as f:
+        json.dump(sorted(history), f, indent=2)
 
-
-def generate_blog(market_summary: str, section_count: int = 1):
-    est = pytz.timezone("America/New_York")
-    now_est = datetime.now(pytz.utc).astimezone(est)
-    weekday = now_est.strftime("%A")
-    day_number = now_est.day
-    month_name = now_est.strftime("%B")
-    year = now_est.year
-    day_ord = ordinal(day_number)
-
-    today_line = (
-        f"Today is {weekday}, {day_ord} of {month_name} {year} Eastern Time | "
-        "This science & technology update is brought to you by Preeti Capital, your trusted source for intelligent insights."
-    )
-
-    blog_sections = []
-    section_titles = [f"Section {i+1}" for i in range(section_count)]
-
-    for i in range(section_count):
-        system_content = f"""
-You are a senior science and technology journalist writing for a well-informed audience about - Majorana by Microsoft. Write the section titled '{section_titles[i]}'.
-
-Each section should be around 250 words, based only on verified scientific or technological facts. Use your internal knowledge base but avoid speculation or fictional data. Maintain a clear, factual, and analytical tone. Avoid repetition. Do not use headings in the output. Do not include any symbols like the caret (^), emojis, or unsupported claims.
-{"Begin the first section with this exact sentence:\n" + today_line if i == 0 else ""}
-""".strip()
-
-        messages = [
-            {"role": "system", "content": system_content},
-            {
-                "role": "user",
-                "content": "Please write a factual and engaging science and technology update for a blog post.",
-            },
-        ]
-
+# ─── LLM-based topic picker ──────────────────────────────────────────────
+def get_new_topic_via_llm(history: Set[str]) -> str:
+    """Ask GPT-4o for a fresh Sci-Tech headline not in history."""
+    attempts = 0
+    latest_list = ', '.join(list(history)[-50:]) or '(none)'
+    while attempts < MAX_TOPIC_ATTEMPTS:
+        attempts += 1
         try:
             resp = client.chat.completions.create(
                 model="gpt-4o",
-                messages=messages,
-                temperature=0.7,
+                messages=[{
+                    "role": "system",
+                    "content":(
+                        "You are a science & technology news curator.\n"
+                        "Step 1 – Mentally review today’s front pages or RSS feeds of:\n"
+                        "• Scientific American (News)  • ScienceDaily (Top Science)\n"
+                        "• Ars Technica – Science      • TechCrunch (General Feed)\n"
+                        "Scan stories published within the last 48 hours.\n\n"
+                        "Step 2 – Choose ONE headline that is specific, impactful, and easy to verify "
+                        "(breakthrough, release, discovery, or policy change; no vague trend pieces).\n\n"
+                        f"Step 3 – Compare against this list of USED topics: {latest_list}\n"
+                        "If your headline appears (case-insensitive), pick another.\n"
+                        "Return ONLY valid JSON like: {\"topic\": \"<headline>\"}"
+                    )
+                }],
+                temperature=0.3,
             )
-            section_text = resp.choices[0].message.content.strip()
-            blog_sections.append(section_text)
+            topic = json.loads(resp.choices[0].message.content)["topic"].strip()
+            if topic.lower() not in {t.lower() for t in history}:
+                history.add(topic)
+                save_topic_history(history)
+                return topic
+            print("[⚠] GPT chose a repeat, retrying …")
+        except (OpenAIError, KeyError, json.JSONDecodeError) as e:
+            print(f"[!] Topic selection error ({attempts}):", e)
+    # fallback
+    return topic if 'topic' in locals() else "A recent breakthrough in science and technology"
+
+# ─── LOGGING ─────────────────────────────────────────────────────────────
+def log_blog_to_history(content: str):
+    ts = datetime.now(pytz.utc).astimezone(
+         pytz.timezone('America/New_York')).strftime("%Y-%m-%d %H:%M:%S %Z")
+    divider = "="*80
+    with open(LOG_FILE, "a") as f:
+        f.write(f"\n\n{divider}\nBLOG ENTRY – {ts}\n{divider}\n\n{content}\n")
+    print("Logged to", LOG_FILE)
+
+# ─── BLOG GENERATION ─────────────────────────────────────────────────────
+def generate_blog(topic: str, section_count: int = 3):
+    est = pytz.timezone("America/New_York")
+    now = datetime.now(pytz.utc).astimezone(est)
+    intro = (
+        f"Today is {now.strftime('%A')}, {ordinal(now.day)} of "
+        f"{now.strftime('%B')} {now.year} Eastern Time | "
+        "This science & technology update is brought to you by "
+        "Preeti Capital, your trusted source for intelligent insights."
+    )
+
+    # Optional: predefined section titles
+    default_titles = [
+        "Background", "Key Findings", "Implications",
+        "Expert Insights", "Future Outlook", "Broader Impact"
+    ]
+    blog_sections = []
+
+    for i in range(section_count):
+        title = default_titles[i] if i < len(default_titles) else f"Section {i+1}"
+        sys_msg = (
+            f"You are a senior science & technology journalist.\n"
+            f"Write the section titled '{title}' (~250-350 words) about **{topic}**.\n"
+            "• Strictly factual and analytical (no speculation or unsupported claims)\n"
+            "• Professional tone, avoid repetition, no headings inside text, "
+            "no emojis or caret symbols.\n"
+            f"{'Begin the first paragraph exactly with: '+intro if i==0 else ''}"
+        )
+        try:
+            text = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": sys_msg},
+                    {"role": "user",   "content": "Write the section now."}
+                ],
+                temperature=0.7
+            ).choices[0].message.content.strip()
         except OpenAIError as e:
-            print(f"[!] Section {i+1} failed: {e}")
-            blog_sections.append("Content temporarily unavailable.")
+            print(f"[!] Section '{title}' error:", e)
+            text = "Content temporarily unavailable."
+        blog_sections.append(text)
 
     full_blog = "\n\n".join(blog_sections)
 
-    # Metadata: summary and title
+    # ── summary + headline ────────────────────────────────────────────
     try:
-        meta_resp = client.chat.completions.create(
+        meta = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a science and technology editor. Summarize the full blog in ~100 words starting with 'SUMMARY:'. "
-                        "Then generate a compelling headline (no timestamps). Return JSON with keys 'summary' and 'title'."
-                    ),
-                },
-                {"role": "user", "content": full_blog},
+                {"role":"system",
+                 "content":"You are a Sci-Tech editor. Summarise (~100 words, start with 'SUMMARY:') "
+                           "and craft a catchy headline (no dates). Return JSON {'summary','title'}."},
+                {"role":"user", "content":full_blog}
             ],
             temperature=0.0,
-        )
-        # The model should output a JSON string like: {"summary": "...", "title": "..."}
-        meta_data = json.loads(meta_resp.choices[0].message.content)
-        summary = meta_data.get("summary", "").strip()
-        title = meta_data.get("title", "").strip()
+            response_format={"type":"json_object"}
+        ).choices[0].message.content
+        meta_json = json.loads(meta)
+        summary, title = meta_json["summary"].strip(), meta_json["title"].strip()
     except Exception as e:
-        print(f"[!] Metadata generation failed: {e}")
-        summary = "SUMMARY: This post explores current developments in science and technology."
-        title = "Innovation Watch: Today’s Breakthroughs in Science & Tech"
+        print("[!] Meta generation failed:", e)
+        summary = "SUMMARY: Overview of a recent science & technology development."
+        title   = f"Insight: {topic}"
 
     log_blog_to_history(full_blog)
     return full_blog, summary, title
 
-
+# ─── LOCAL SAVE ─────────────────────────────────────────────────────────
 def save_local(blog: str, summary: str):
-    try:
-        with open("blog_summary.txt", "w") as f:
-            f.write(summary)
-        with open("blog_post.txt", "w") as f:
-            f.write(blog + "\n\n" + summary)
-        print("Saved locally")
-    except IOError as e:
-        print(f"Failed to save local files: {e}")
+    open("blog_post_science.txt","w").write(blog + "\n\n" + summary)
+    open("blog_summary_science.txt","w").write(summary)
+    print("Saved blog_post_science.txt & blog_summary_science.txt")
 
-
+# ─── VIDEO PROMPT ───────────────────────────────────────────────────────
 def generate_video_prompt(summary_text: str) -> str:
     try:
-        print("Generating video narration prompt from blog summary...")
-        response = client.chat.completions.create(
+        resp = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a professional scriptwriter for short science & tech news videos targeted at curious minds. "
-                        "Write exactly 2 short, impactful sentences summarizing the situation based on the given summary. "
-                        "Do NOT include any introduction like 'This news is brought to you by Preeti Capital'."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"Write a concise 2-sentence video narration based on this summary:\n\n{summary_text}",
-                },
+                {"role":"system",
+                 "content":"You are a scriptwriter for short Sci-Tech videos. "
+                           "Write exactly 2 punchy sentences based on the summary."},
+                {"role":"user","content":summary_text}
             ],
-            temperature=0.6,
+            temperature=0.6
         )
-        pure_narration = response.choices[0].message.content.strip()
-        fixed_intro = "This update is brought to you by Preeti Capital, your trusted source for intelligent insights."
-        narration = f"{fixed_intro} {pure_narration}"
-
-        with open("video_prompt.txt", "w") as f:
-            f.write(narration)
-        print("Saved video narration to video_prompt.txt")
+        narration_core = resp.choices[0].message.content.strip()
+        narration = ("This update is brought to you by Preeti Capital, your trusted "
+                     f"source for intelligent insights. {narration_core}")
+        open("video_prompt_science.txt","w").write(narration)
+        print("Saved video_prompt_science.txt")
         return narration
     except Exception as e:
-        print(f"Failed to generate video narration prompt: {e}")
+        print("Video prompt error:", e)
         return ""
 
-
+# ─── WORDPRESS UPLOAD ───────────────────────────────────────────────────
 def post_to_wordpress(title: str, content: str, featured_media: int):
     try:
         payload = {
             "title": title,
             "content": content,
             "status": "publish",
-            "featured_media": featured_media,
+            "featured_media": featured_media
         }
-        resp = requests.post(
+        r = requests.post(
             f"{WP_SITE_URL}/wp-json/wp/v2/posts",
             auth=(WP_USERNAME, WP_APP_PASSWORD),
-            json=payload,
+            json=payload
         )
-        resp.raise_for_status()
-        print("Published post (status", resp.status_code, ")")
+        r.raise_for_status()
+        print("Published post (HTTP", r.status_code, ")")
     except requests.RequestException as e:
-        print(f"Failed to post to WordPress: {e}")
+        print("WordPress post failed:", e)
 
-
+# ─── MAIN WORKFLOW ──────────────────────────────────────────────────────
 if __name__ == "__main__":
     try:
-        print("Fetching market snapshot...")
+        # Optional: financial snapshot reuse
         snapshot = get_market_snapshot()
         append_snapshot_to_log(snapshot)
-        market_summary = summarize_market_snapshot(snapshot)
+        _ = summarize_market_snapshot(snapshot)
 
-        # 🔧 Adjust section_count here
-        section_count = 5  # For ~500-word blog (adjust as needed)
+        history = load_topic_history()
+        topic = get_new_topic_via_llm(history)
+        print("Chosen topic:", topic)
 
-        print(f"Generating blog content with {section_count} sections...")
-        blog_text, summary_text, base_title = generate_blog(market_summary, section_count=section_count)
+        section_count = 3   # change 1-6 as needed
+        blog_text, summary_text, base_title = generate_blog(topic, section_count)
 
-        print("Fetching and uploading blog poster via Unsplash...")
+        print("Fetching and uploading poster image …")
         media_obj = image_utils.fetch_and_upload_blog_poster(blog_text)
-        media_id = media_obj.get("id", 0)
+        media_id  = media_obj.get("id", 0)
         media_src = media_obj.get("source_url", "")
 
         save_local(blog_text, summary_text)
+        _ = generate_video_prompt(summary_text)
 
-        video_prompt = generate_video_prompt(summary_text)
-
-        est_now = datetime.now(pytz.utc).astimezone(pytz.timezone("America/New_York"))
+        est_now = datetime.now(pytz.utc).astimezone(pytz.timezone('America/New_York'))
         ts_readable = est_now.strftime("%A, %B %d, %Y %H:%M")
         final_title = f"{ts_readable} EST  |  {base_title}"
 
-        # Include a header section with image and title
         header_html = (
-            '<div style="display:flex; align-items:center; margin-bottom:20px;">'
-            f'<div style="flex:1;"><img src="{media_src}" style="width:100%; height:auto;" /></div>'
-            '<div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:20px;">'
-            f'<div style="color:#666; font-size:12px; margin-bottom:8px;">{ts_readable} EST</div>'
-            f'<h1 style="margin:0; font-size:24px;">{base_title}</h1>'
-            "</div>"
-            "</div>"
+            '<div style="display:flex;align-items:center;margin-bottom:20px;">'
+            f'<div style="flex:1;"><img src="{media_src}" style="width:100%;height:auto;" /></div>'
+            '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:20px;">'
+            f'<div style="color:#666;font-size:12px;margin-bottom:8px;">{ts_readable} EST</div>'
+            f'<h1 style="margin:0;font-size:24px;">{base_title}</h1>'
+            '</div></div>'
         )
-
-        # Combine header and blog text for the post body
         post_body = header_html + f"<div>{blog_text}</div>"
 
-        print("Publishing to WordPress...")
+        print("Publishing to WordPress …")
         post_to_wordpress(final_title, post_body, featured_media=media_id)
 
-        print("Done")
-
+        print("Done ✅")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print("Unexpected error:", e)
