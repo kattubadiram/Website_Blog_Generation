@@ -1,6 +1,9 @@
-name: testing
+name: testing blog
 
 on:
+  # schedule:
+    # 06:02 AM New-York time (GitHub cron uses UTC)
+    # - cron: '2 10 * * *'
   workflow_dispatch:
 
 permissions:
@@ -11,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ──────────────── Repo & Python Setup ───────────────────────
+      # ─────────────────── Repo & Python setup ──────────────────────
       - name: Checkout code
         uses: actions/checkout@v3
         with:
@@ -22,11 +25,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg libjpeg-dev zlib1g-dev libfreetype6-dev
           python3 -m venv .venv
-          source .venv/bin/activate
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.py', 'requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
           .venv/bin/pip install --upgrade pip setuptools
+
+          # 1️⃣  From default PyPI index
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
@@ -35,11 +47,13 @@ jobs:
             transformers accelerate sentencepiece \
             google-cloud-texttospeech gtts \
             google-auth google-auth-oauthlib google-api-python-client
+
+          # 2️⃣  CPU-only PyTorch
           .venv/bin/pip install --no-cache-dir \
             --index-url https://download.pytorch.org/whl/cpu \
             torch
 
-      # ──────────────── Blog Generation ───────────────────────────
+      # ─────────────────── Blog generation ──────────────────────────
       - name: Generate blog and summary
         run: .venv/bin/python modular_blog.py
         env:
@@ -48,7 +62,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # ──────────────── GCP TTS & Voice-over ─────────────────────
+      # ─────────────────── GCP credentials & voice-over ────────────
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
@@ -68,8 +82,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
 
-      # ──────────────── Video Creation ────────────────────────────
-      - name: Generate 20s video narration prompt
+      - name: Generate 20s video narration
         run: .venv/bin/python generate_video_prompt.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -91,7 +104,21 @@ jobs:
       - name: Merge avatar video and overlay images
         run: .venv/bin/python edit_and_merge_video.py
 
-      # ──────────────── YouTube Upload ────────────────────────────
+      - name: Upload blog audio to WordPress
+        run: .venv/bin/python upload_audio_and_embed.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
+
+      # ─────────────────── Upload to YouTube Shorts (final method) ──────────
       - name: Prepare YouTube OAuth credentials
         run: |
           echo '${{ secrets.YT_CREDENTIALS_JSON }}' > credentials.json
@@ -100,7 +127,7 @@ jobs:
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
 
-      # ──────────────── Upload Blog to WordPress ──────────────────
+      # ─────────────────── Publish to WordPress ──────────
       - name: Upload blog audio to WordPress
         run: .venv/bin/python upload_audio_and_embed.py
         env:
@@ -108,7 +135,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
 
-      # ──────────────── Commit History Logs ───────────────────────
+      # ─────────────────── Commit history logs back to repo ─────────
       - name: Commit history logs
         if: success()
         run: |
