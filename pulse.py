@@ -1,11 +1,12 @@
 """
-pulse.py  ·  Morning Market Primer  – Section 2
+pulse.py  ·  Morning Market Primer – Section 2
 ------------------------------------------------
 Captures “market pulse” stats: indices, bonds, vol, FX,
 commodities, crypto, and macro calendar.
 
 Output
-  • data/YYYY-MM-DD/pulse.json
+  • pulse_log.jsonl (append-only)
+  • pulse_latest.json (latest snapshot)
 """
 import datetime as dt
 import json
@@ -13,52 +14,35 @@ import pathlib
 import time
 from typing import Dict, List
 
-import datetime as dt
 import importlib.util
-import json
-import pathlib
-import time
-from typing import Dict, List
-from article_extractor import extract_article_text
-import time
-T0 = time.time()
 import pandas as pd
 import requests
 import feedparser
 import yfinance as yf
-from transformers import logging as tf_logging, pipeline, Pipeline
-
+import pytz
 from transformers import pipeline, Pipeline
-import importlib
-import pandas as pd
-import yfinance as yf
-import pytz                       # ← NEW
+from article_extractor import extract_article_text
+
+# ─── Timing ─────────────────────────────────────────────────────
 T0 = time.time()
 
+# ─── Optional FAISS ingestion ──────────────────────────────────
 try:
     from rag_layer.ingest import ingest_section
 except ImportError:
     ingest_section = lambda *_a, **_kw: None
 
-# ── New EST-aware folder ───────────────────────────
-EST   = pytz.timezone("America/New_York")
-TODAY = dt.datetime.now(dt.timezone.utc).astimezone(EST).date()
-DATA_DIR = pathlib.Path("data") / TODAY.isoformat()
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+# ─── Constants ─────────────────────────────────────────────────
+EST     = pytz.timezone("America/New_York")
+RUNDATE = dt.datetime.now(dt.timezone.utc).astimezone(EST).date().isoformat()
 
-# (rest of your original pulse-gathering logic remains unchanged)
-TODAY      = dt.date.today()
-DATA_DIR   = pathlib.Path("data") / TODAY.isoformat()
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-# 1.1 · Symbols we track
 INDICES = {
-    "S&P 500":               "^GSPC",
-    "Dow Jones Industrial":  "^DJI",
-    "Nasdaq Composite":      "^IXIC",
+    "S&P 500":                "^GSPC",
+    "Dow Jones Industrial":   "^DJI",
+    "Nasdaq Composite":       "^IXIC",
     "10-Year Treasury Yield": "^TNX",
-    "U.S. Dollar Index":     "DX-Y.NYB",
-    "CBOE VIX":              "^VIX"
+    "U.S. Dollar Index":      "DX-Y.NYB",
+    "CBOE VIX":               "^VIX"
 }
 
 COMMODITIES = {
@@ -69,7 +53,7 @@ COMMODITIES = {
     "Natural Gas":   "NG=F"
 }
 
-SYMBOLS = {**INDICES, **COMMODITIES}           # merged dict
+SYMBOLS = {**INDICES, **COMMODITIES}
 
 HEADERS = {
     "User-Agent": (
@@ -79,16 +63,15 @@ HEADERS = {
     )
 }
 
-# ────────────────────────────────────────────────────────────────
-# STEP 2 · Summariser pipeline (backend guard & anonymous download)
-# ────────────────────────────────────────────────────────────────
+# ─── Summarisation model setup ─────────────────────────────────
 if not any(importlib.util.find_spec(x) for x in ("torch", "tensorflow", "jax")):
     raise RuntimeError(
-        "No deep-learning backend detected.  Install CPU PyTorch:\n"
+        "No deep-learning backend detected.\n"
+        "Install CPU PyTorch:\n"
         "    pip install torch --index-url https://download.pytorch.org/whl/cpu torch"
     )
 
-MODEL_NAME = "sshleifer/distilbart-cnn-12-6"              # ≈480 MB
+MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
 
 summariser: Pipeline = pipeline(
     "summarization",
@@ -96,17 +79,11 @@ summariser: Pipeline = pipeline(
     tokenizer=MODEL_NAME,
     framework="pt",
     truncation=True,
-    token=None                                            # anonymous → avoids 401
+    token=None
 )
 
-# ────────────────────────────────────────────────────────────────
-# STEP 3 · Pull latest quotes (one batched yfinance call)
-# ────────────────────────────────────────────────────────────────
+# ─── Quote fetching (yfinance) ─────────────────────────────────
 def fetch_quotes(symbol_map: Dict[str, str]) -> Dict[str, Dict]:
-    """
-    Returns a dict mapping each name → {last_close, prev_close, pct_change}.
-    Uses a 5-day window to grab yesterday’s and today’s closes.
-    """
     tickers = list(symbol_map.values())
     df = yf.download(
         tickers,
@@ -142,14 +119,8 @@ def fetch_quotes(symbol_map: Dict[str, str]) -> Dict[str, Dict]:
             }
     return out
 
-# ────────────────────────────────────────────────────────────────
-# STEP 4 · Fetch up to 10 RSS headlines for a symbol
-# ────────────────────────────────────────────────────────────────
+# ─── RSS scraping + summarisation ──────────────────────────────
 def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
-    """
-    Queries Yahoo’s RSS feed for the given symbol.
-    Returns a list of up to 10 dicts: {title, summary, link, published}.
-    """
     url = (
         f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={symbol}"
         "&region=US&lang=en-US"
@@ -168,17 +139,11 @@ def yahoo_rss(symbol: str, pause: float = 1.0) -> List[Dict]:
         })
     return out
 
-# ────────────────────────────────────────────────────────────────
-# STEP 5 · Condense each headline into one line (FULL-ARTICLE MODE)
-# ────────────────────────────────────────────────────────────────
-
 def summarise_entries(entries: List[Dict]) -> List[str]:
     lines: List[str] = []
     for e in entries:
-        # 5.1  try full-article extraction
         art_text = extract_article_text(e["link"])
         src_text = art_text if art_text else e["title"] + ". " + e.get("summary", "")
-        # 5.2  summarise
         line = summariser(
             src_text,
             max_length=60,
@@ -188,15 +153,8 @@ def summarise_entries(entries: List[Dict]) -> List[str]:
         lines.append(line.strip())
     return lines
 
-# ────────────────────────────────────────────────────────────────
-# STEP 6 · Build canonical JSON blob
-# ────────────────────────────────────────────────────────────────
+# ─── Core data blob builder ────────────────────────────────────
 def build_pulse_blob(pause: float = 1.0) -> Dict:
-    """
-    1) Fetch latest quotes for all indices and commodities.
-    2) For each symbol, fetch up to 10 RSS headlines and summarise each.
-    3) Construct the JSON in our agreed schema.
-    """
     quote_data = fetch_quotes(SYMBOLS)
 
     entities: List[Dict] = []
@@ -219,20 +177,27 @@ def build_pulse_blob(pause: float = 1.0) -> Dict:
         "meta": {
             "section": "pulse",
             "generated_at": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "run_date": RUNDATE,
             "source": "yfinance + yahoo_rss"
         },
         "entities": entities
     }
 
-# ────────────────────────────────────────────────────────────────
-# STEP 7 · Persist + optional vector-ingest
-# ────────────────────────────────────────────────────────────────
+# ─── Persistence (JSONL + latest) ──────────────────────────────
+LOG_FILE    = pathlib.Path("pulse_log.jsonl")
+LATEST_FILE = pathlib.Path("pulse_latest.json")
+
+def append_to_log(blob: Dict) -> None:
+    with LOG_FILE.open("a") as f:
+        f.write(json.dumps(blob) + "\n")
+    LATEST_FILE.write_text(json.dumps(blob, indent=2))
+    print(f"✔ Appended snapshot to {LOG_FILE} and refreshed {LATEST_FILE}")
+
+# ─── Entrypoint ────────────────────────────────────────────────
 def main():
     blob = build_pulse_blob()
 
-    out_file = DATA_DIR / "pulse.json"
-    out_file.write_text(json.dumps(blob, indent=2))
-    print(f"✔ Saved pulse JSON → {out_file}")
+    append_to_log(blob)
 
     try:
         ingest_section(blob)
@@ -241,6 +206,6 @@ def main():
         print(f"Vector-ingest skipped – {exc}")
 
     print(f"⏱ Total runtime: {round(time.time() - T0, 2)} seconds")
-    
+
 if __name__ == "__main__":
     main()
