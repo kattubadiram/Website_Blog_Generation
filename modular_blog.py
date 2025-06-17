@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-modular_blog.py – four-section (≈250-300 words each) market blog builder
+modular_blog.py – four-section (~250–300 words each) market blog builder
 
-Reads  latest snapshots by default:
-  breadth_latest.json, pulse_latest.json, movers_latest.json, watchlist_latest.json
+Reads from JSONL logs:
+  • breadth_log.jsonl
+  • pulse_log.jsonl
+  • movers_log.jsonl
+  • watchlist_log.jsonl
 
-If the script is called with a date argument (YYYY-MM-DD), it will pull the
-matching snapshot out of each *_log.jsonl file instead.
+If run with a date argument (YYYY-MM-DD), pulls that day’s snapshot from each
+log.  With no argument, uses the *last* line of every log (most-recent run).
 
-Writes  blog_post.txt, blog_summary.txt, video_prompt.txt
-Publishes to WordPress via post_to_wordpress() imported from final.py
+Writes blog_post.txt, blog_summary.txt, video_prompt.txt, and publishes to
+WordPress via helpers in final.py.
 """
-import json, os, sys, gzip
+import json, os, sys
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict
@@ -20,22 +23,15 @@ import pytz, openai
 from dotenv import load_dotenv
 from openai import OpenAIError
 
-# ─── env ───────────────────────────────────────────────────────────
+# ─── environment ──────────────────────────────────────────────────────
 load_dotenv()
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# WordPress helpers live in final.py – import without running its main()
+# Import WordPress helpers without executing final.py’s main()
 from final import generate_video_prompt, post_to_wordpress   # noqa: E402
 
 EST        = pytz.timezone("America/New_York")
 TODAY_EST  = datetime.now(timezone.utc).astimezone(EST).date()
-
-LATEST_FILES = {
-    "breadth":   Path("breadth_latest.json"),
-    "pulse":     Path("pulse_latest.json"),
-    "movers":    Path("movers_latest.json"),
-    "watchlist": Path("watchlist_latest.json"),
-}
 
 LOG_FILES = {
     "breadth":   Path("breadth_log.jsonl"),
@@ -45,33 +41,47 @@ LOG_FILES = {
 }
 
 SECTIONS = [
-    ("Trend Check",    "breadth"),    # maps to breadth_latest.json
+    ("Trend Check",    "breadth"),
     ("Market Pulse",   "pulse"),
     ("Top Movers",     "movers"),
     ("Stocks to Watch","watchlist"),
 ]
 
-# ─── helpers ──────────────────────────────────────────────────────
+# ─── helpers ──────────────────────────────────────────────────────────
 def ordinal(n: int) -> str:
-    return f"{n}{'th' if 11<=n%100<=13 else {1:'st',2:'nd',3:'rd'}.get(n%10,'th')}"
+    return f"{n}{'th' if 11 <= n % 100 <= 13 else {1:'st', 2:'nd', 3:'rd'}.get(n % 10, 'th')}"
 
 def banner() -> str:
     now = datetime.now(timezone.utc).astimezone(EST)
     return (f"Today is {now:%A}, {ordinal(now.day)} of {now:%B} {now.year} Eastern Time | "
             "This news is brought to you by Preeti Capital, your trusted source for financial insights.")
 
+def _tail(path: Path) -> str:
+    """Return the last non-empty line of a file."""
+    with path.open("rb") as f:
+        f.seek(0, os.SEEK_END)
+        buf, pos = b"", f.tell()
+        while pos:
+            pos -= 1
+            f.seek(pos)
+            char = f.read(1)
+            if char == b"\n" and buf:
+                break
+            buf = char + buf
+        return buf.decode("utf-8")
+
 def load_latest_blob(key: str) -> Dict:
-    path = LATEST_FILES[key]
-    if not path.exists():
-        print(f"[!] Missing {path}")
+    log_path = LOG_FILES[key]
+    if not log_path.exists():
+        print(f"[!] Missing {log_path}")
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(_tail(log_path))
+    except Exception as exc:
+        print(f"[!] Failed to parse {log_path}: {exc}")
+        return {}
 
 def load_blob_for_date(key: str, date_iso: str) -> Dict:
-    """
-    Scans the *_log.jsonl file for the first blob whose meta.run_date matches date_iso.
-    Returns {} if not found.
-    """
     log_path = LOG_FILES[key]
     if not log_path.exists():
         print(f"[!] Missing {log_path}")
@@ -84,23 +94,20 @@ def load_blob_for_date(key: str, date_iso: str) -> Dict:
                     return blob
             except Exception:
                 continue
-    print(f"[!] No {key} entry for {date_iso} found in {log_path}")
+    print(f"[!] No {key} entry for {date_iso} in {log_path}")
     return {}
 
 def write(path: str | Path, txt: str) -> None:
     Path(path).write_text(txt, encoding="utf-8")
 
-# ─── main ────────────────────────────────────────────────────────
+# ─── main ─────────────────────────────────────────────────────────────
 def main(date_iso: str | None = None) -> None:
-    # 1) Load all four blobs
+    # 1. Load blobs
     blobs = {}
-    for title, key in SECTIONS:
-        if date_iso:
-            blobs[key] = load_blob_for_date(key, date_iso)
-        else:
-            blobs[key] = load_latest_blob(key)
+    for _, key in SECTIONS:
+        blobs[key] = load_blob_for_date(key, date_iso) if date_iso else load_latest_blob(key)
 
-    # 2) Generate each section via GPT
+    # 2. GPT: build each section
     sections_out = []
     for idx, (title, key) in enumerate(SECTIONS):
         raw_json = json.dumps(blobs.get(key, {}))
@@ -128,7 +135,7 @@ def main(date_iso: str | None = None) -> None:
 
     full_blog = "\n\n".join(sections_out)
 
-    # 3) Generate summary + headline
+    # 3. Summary + headline
     try:
         meta = client.chat.completions.create(
             model="gpt-4o",
@@ -137,8 +144,8 @@ def main(date_iso: str | None = None) -> None:
             messages=[
                 {"role": "system",
                  "content": "You are a financial editor. Summarize the blog in ≈100 words "
-                            "starting with 'SUMMARY:'. Then craft a compelling headline (no timestamps). "
-                            "Return JSON with 'summary' and 'title'."},
+                            "starting with 'SUMMARY:'. Then craft a compelling headline "
+                            "(no timestamps). Return JSON with 'summary' and 'title'."},
                 {"role": "user", "content": full_blog}
             ]
         )
@@ -150,19 +157,19 @@ def main(date_iso: str | None = None) -> None:
         summary = "SUMMARY: Financial markets are in motion..."
         title   = "Market Commentary: Key Takeaways from Global Moves"
 
-    # 4) Local artefacts
-    write("blog_post.txt",      full_blog)
-    write("blog_summary.txt",   summary)
+    # 4. Local artefacts
+    write("blog_post.txt",    full_blog)
+    write("blog_summary.txt", summary)
     video_prompt = generate_video_prompt(summary)
-    write("video_prompt.txt",   video_prompt)
+    write("video_prompt.txt", video_prompt)
 
-    # Optionally store article.md under data/<DATE>/ for archival
-    article_folder = Path("data") / (date_iso or str(TODAY_EST))
-    article_folder.mkdir(parents=True, exist_ok=True)
-    (article_folder / "article.md").write_text(full_blog, encoding="utf-8")
+    # Archive markdown in data/<date>/
+    archive_folder = Path("data") / (date_iso or str(TODAY_EST))
+    archive_folder.mkdir(parents=True, exist_ok=True)
+    (archive_folder / "article.md").write_text(full_blog, encoding="utf-8")
     print("✅ Local files saved")
 
-    # 5) Try featured image
+    # 5. Optional featured image
     media_id = 0
     try:
         import image_utils
@@ -170,12 +177,11 @@ def main(date_iso: str | None = None) -> None:
     except ModuleNotFoundError:
         pass
 
-    # 6) Publish to WordPress
+    # 6. Publish to WordPress
     ts_est = datetime.now(timezone.utc).astimezone(EST).strftime("%A, %B %d, %Y %H:%M")
     final_title = f"{ts_est} EST | {title}"
     post_to_wordpress(final_title, f"<div>{full_blog}</div>", media_id)
     print("✅ Blog generation & publish complete\nTitle →", final_title)
-
 
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) == 2 else None)
