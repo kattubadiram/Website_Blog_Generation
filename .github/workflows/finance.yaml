@@ -65,6 +65,8 @@ jobs:
 
 
       # Optional extra snapshot (kept from original flow)
+      - name: Fetch market data and save snapshot
+        run: .venv/bin/python market_snapshot_fetcher.py
 
 
       - name: Verify ffmpeg-python is importable
