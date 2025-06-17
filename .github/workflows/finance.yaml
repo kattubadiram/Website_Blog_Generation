@@ -54,12 +54,14 @@ jobs:
 
       # ─────────────────── Data-collection phase ────────────────────
 
-      - name: Build watchlist
-        run: .venv/bin/python watchlist.py
       - name: Fetch market pulse
         run: .venv/bin/python pulse.py
       - name: Fetch movers
         run: .venv/bin/python movers.py
+      - name: Build watchlist
+        run: .venv/bin/python watchlist.py
+      - name: Fetch breadth / trend data
+        run: .venv/bin/python trend.py
 
 
       # Optional extra snapshot (kept from original flow)
