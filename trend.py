@@ -33,7 +33,7 @@ TODAY     = dt.datetime.now(dt.timezone.utc).astimezone(EST).date()
 RUN_DATE  = TODAY.isoformat()
 
 SECTOR_TICKERS = [
-    "XLB", "XLC", "XLE", "XLF", "XLI",
+    "QQQ", "XLB", "XLC", "XLE", "XLF", "XLI",
     "XLK", "XLP", "XLU", "XLV", "XLRE", "XLY"
 ]
 
