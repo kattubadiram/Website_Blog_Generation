@@ -61,8 +61,8 @@ jobs:
         run: .venv/bin/python movers.py
       - name: Build watchlist
         run: .venv/bin/python watchlist.py
-      - name: Fetch breadth / trend data
-        run: .venv/bin/python trend.py
+      #- name: Fetch breadth / trend data
+       # run: .venv/bin/python trend.py
 
       - name: Fetch market data and save snapshot
         run: .venv/bin/python market_snapshot_fetcher.py
