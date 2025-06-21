@@ -1,7 +1,10 @@
-name: Science Blog
+name: Finance Final
 
 on:
-  workflow_dispatch:      # Manual trigger also allowed
+  #schedule:
+    # 06:02 AM New-York time
+   #- cron: '30 8 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ─────────────────── Repo & Python setup ──────────────────────
       - name: Checkout code
         uses: actions/checkout@v3
         with:
@@ -26,18 +30,28 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/generate_video_heygen.py', '**/edit_and_merge_video.py') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.py', 'requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
           .venv/bin/pip install --upgrade pip setuptools
+
+          # 1️⃣  From default PyPI index
           .venv/bin/pip install --no-cache-dir \
             pytz requests python-dotenv openai>=1.0.0 \
             ffmpeg-python natsort pillow==9.5.0 imageio==2.31.1 imageio-ffmpeg==0.4.8 \
-            moviepy==1.0.3 yfinance feedparser \
-            google-cloud-texttospeech gtts
+            moviepy==1.0.3 yfinance feedparser pandas ta \
+            beautifulsoup4 readability-lxml lxml \
+            transformers accelerate sentencepiece \
+            google-cloud-texttospeech gtts \
+            google-auth google-auth-oauthlib google-api-python-client
+
+          # 2️⃣  CPU-only PyTorch
+          .venv/bin/pip install --no-cache-dir \
+            --index-url https://download.pytorch.org/whl/cpu \
+            torch
 
       - name: Run blog and summary generator
         run: .venv/bin/python science.py
@@ -46,7 +60,8 @@ jobs:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
+          
+      # ─────────────────── GCP credentials & voice-over ────────────
       - name: Write Google credentials to file
         run: echo "$GOOGLE_CREDENTIALS_JSON" > google-credentials.json
         env:
@@ -55,33 +70,66 @@ jobs:
       - name: Verify Google Cloud credentials
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
-          .venv/bin/python -c "from google.cloud import texttospeech; client = texttospeech.TextToSpeechClient(); print('Google Cloud auth works')"
+          .venv/bin/python - <<'PY'
+          from google.cloud import texttospeech
+          texttospeech.TextToSpeechClient()
+          print("Google Cloud auth OK")
+          PY
 
-      - name: Generate blog voiceover
+      - name: Generate blog voice-over
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/google-credentials.json"
           .venv/bin/python generate_audio_from_blog.py
 
+      - name: Generate 20s video narration
+        run: .venv/bin/python generate_video_prompt.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Generate avatar video
+        run: .venv/bin/python generate_video_heygen.py
+        env:
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API1 }}
+
+      - name: Save generated avatar video immediately
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add avatar_video.mp4
+          git commit -m "Save generated avatar_video.mp4 [skip ci]" || echo "No avatar video changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+
+      - name: Merge avatar video and overlay images
+        run: .venv/bin/python edit_and_merge_video.py
+
+      # ─────────────────── Upload to YouTube Shorts (final method) ──────────
+      - name: Prepare YouTube OAuth credentials
+        run: |
+          echo '${{ secrets.YT_CREDENTIALS_JSON }}' > credentials.json
+          echo '${{ secrets.YT_TOKEN_JSON }}' > token.json
+
+      - name: Upload video to YouTube Shorts
+        run: .venv/bin/python upload_to_youtube.py
+
+      # ─────────────────── Publish to WordPress ──────────
       - name: Upload blog audio to WordPress
         run: .venv/bin/python upload_audio_and_embed.py
         env:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-          
+      
+      - name: Upload video to WordPress
+        run: .venv/bin/python upload_video_to_wp.py
+        env:
+          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}          
+
       - name: Upload video to WordPress
         run: .venv/bin/python upload_to_wp.py
         env:
           WP_USERNAME:     ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           WP_SITE_URL:     ${{ secrets.WP_SITE_URL }}
-
-      - name: Commit history logs
-        if: success()
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git add blog_history.txt market_snapshot_log.jsonl
-          git commit -m "Update history logs [skip ci]" || echo "No history changes to commit"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git push
