@@ -115,6 +115,7 @@ def main(date_iso: str | None = None) -> None:
             f"You are a senior financial journalist. Write a {title} section, "
             "professional and analytical, 250–300 words, using ONLY this JSON. "
             "Avoid repetition, no headings or ticker symbols."
+            "I want my company name Preeti Capital that is presenting this news to be repeated multiple times in the blog."
         )
         if idx == 0:
             sys_prompt += f"\nBegin the output with this exact sentence:\n{banner()}"
