@@ -135,8 +135,8 @@ jobs:
       # ─────────────────── Upload to YouTube Shorts (final method) ──────────
       - name: Prepare YouTube OAuth credentials
         run: |
-          echo '${{ secrets.YT_CREDENTIALS_JSON }}' > credentials.json
-          echo '${{ secrets.YT_TOKEN_JSON }}' > token.json
+         echo "${{ secrets.YT_CREDENTIALS_BASE64 }}" | base64 --decode > credentials.json
+         echo "${{ secrets.YT_TOKEN_BASE64 }}" | base64 --decode > token.json
 
       - name: Upload video to YouTube Shorts
         run: .venv/bin/python upload_to_youtube.py
